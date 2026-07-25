@@ -4,15 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-white hover:bg-primary/90",
+        primary:
+          "bg-primary text-white shadow-[0_12px_30px_hsl(var(--primary)/0.22)] hover:bg-primary/90 hover:shadow-[0_16px_38px_hsl(var(--primary)/0.28)]",
         secondary:
-          "border border-border bg-surface-raised text-foreground hover:border-primary/50 hover:bg-surface-raised/80",
-        ghost: "text-muted hover:bg-surface-raised hover:text-foreground",
-        danger: "bg-danger text-white hover:bg-danger/90"
+          "border border-border bg-surface-raised/90 text-foreground shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)] hover:border-border-strong hover:bg-surface-elevated",
+        ghost:
+          "text-muted hover:bg-surface-raised/80 hover:text-foreground focus-visible:bg-surface-raised",
+        danger:
+          "bg-danger text-white shadow-[0_12px_30px_hsl(var(--danger)/0.18)] hover:bg-danger/90"
       },
       size: {
         default: "h-11",

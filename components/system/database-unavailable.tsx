@@ -5,7 +5,7 @@ import { databaseUnavailableMessage } from "@/lib/server/database";
 
 export function DatabaseUnavailable() {
   return (
-    <Card>
+    <Card className="scan-line">
       <CardHeader>
         <CardTitle>Database not connected</CardTitle>
         <CardDescription>
@@ -16,9 +16,9 @@ export function DatabaseUnavailable() {
           .
         </CardDescription>
       </CardHeader>
-      <div className="px-5 pb-5">
+      <div>
         <Link
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface-raised px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/50"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border-strong bg-surface-raised/80 px-4 py-2 text-sm font-semibold text-foreground shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)] transition duration-200 hover:border-primary/50 hover:bg-surface-elevated"
           href="/"
         >
           Back to Ascend OS

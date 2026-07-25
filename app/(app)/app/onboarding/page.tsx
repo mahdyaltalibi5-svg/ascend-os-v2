@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Building2 } from "lucide-react";
 
 import { OnboardingForm } from "@/components/app/onboarding-form";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,20 +14,27 @@ export default async function OnboardingPage() {
   if (context) redirect("/app");
 
   return (
-    <main className="min-h-dvh bg-background px-4 py-10 text-foreground">
-      <section className="mx-auto grid w-full max-w-3xl gap-6">
+    <main className="relative min-h-dvh overflow-hidden bg-background px-4 py-10 text-foreground">
+      <div aria-hidden className="ascend-grid absolute inset-0" />
+      <div aria-hidden className="ascend-noise absolute inset-0" />
+      <section className="reveal-up relative mx-auto grid w-full max-w-4xl gap-6">
         <div>
-          <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/40 bg-primary/15 text-sm font-bold text-primary">
+          <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/35 bg-primary/15 text-sm font-black text-primary shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)]">
             AO
           </div>
-          <h1 className="text-3xl font-semibold tracking-normal">Create your organization</h1>
+          <h1 className="text-4xl font-semibold tracking-normal md:text-5xl">
+            Create your organization
+          </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             The first organization establishes tenant boundaries, initial branding, and your Founder
             membership.
           </p>
         </div>
-        <Card>
+        <Card className="scan-line">
           <CardHeader>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-primary/35 bg-primary/15 text-primary">
+              <Building2 aria-hidden className="h-5 w-5" />
+            </div>
             <CardTitle>Organization setup</CardTitle>
             <CardDescription>
               Logo upload is modeled as a URL for now. File storage can be added when production

@@ -6,20 +6,25 @@
   color-scheme: dark;
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --background: 224 37% 4%;
-  --foreground: 210 40% 98%;
-  --surface: 222 36% 9%;
-  --surface-raised: 220 31% 13%;
-  --border: 217 22% 22%;
-  --muted: 215 16% 68%;
-  --primary: 217 91% 60%;
+  --background: 220 35% 4%;
+  --foreground: 216 38% 97%;
+  --surface: 218 31% 8%;
+  --surface-raised: 217 28% 12%;
+  --surface-elevated: 216 25% 16%;
+  --border: 216 18% 20%;
+  --border-strong: 215 22% 29%;
+  --muted: 216 13% 66%;
+  --muted-soft: 217 13% 47%;
+  --primary: 206 100% 57%;
+  --primary-soft: 197 92% 68%;
   --success: 158 64% 52%;
   --warning: 42 96% 56%;
   --danger: 0 84% 62%;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
-  --shadow-ascend: 0 18px 60px rgb(0 0 0 / 0.32);
+  --shadow-ascend: 0 20px 70px rgb(0 0 0 / 0.38);
+  --shadow-focus: 0 0 0 4px hsl(var(--primary) / 0.16);
 }
 
 .light {
@@ -28,9 +33,13 @@
   --foreground: 222 47% 11%;
   --surface: 0 0% 100%;
   --surface-raised: 214 32% 94%;
+  --surface-elevated: 0 0% 100%;
   --border: 214 24% 84%;
+  --border-strong: 214 24% 74%;
   --muted: 215 16% 42%;
+  --muted-soft: 215 16% 54%;
   --primary: 217 91% 52%;
+  --primary-soft: 199 89% 48%;
   --success: 158 64% 40%;
   --warning: 38 92% 45%;
   --danger: 0 72% 51%;
@@ -43,7 +52,10 @@
 html,
 body {
   min-height: 100%;
-  background: hsl(var(--background));
+  background:
+    radial-gradient(circle at 22% -15%, hsl(var(--primary) / 0.18), transparent 32rem),
+    radial-gradient(circle at 95% 6%, hsl(var(--primary-soft) / 0.08), transparent 26rem),
+    linear-gradient(180deg, hsl(219 38% 6%), hsl(var(--background)) 42rem);
   color: hsl(var(--foreground));
 }
 
@@ -51,6 +63,8 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   letter-spacing: 0;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -66,4 +80,98 @@ select {
 
 ::selection {
   background: hsl(var(--primary) / 0.35);
+}
+
+.ascend-grid {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.32) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.72), transparent 72%);
+}
+
+.ascend-noise {
+  background-image: radial-gradient(hsl(var(--foreground) / 0.12) 0.7px, transparent 0.7px);
+  background-size: 9px 9px;
+  opacity: 0.11;
+}
+
+.ascend-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(180deg, hsl(var(--foreground) / 0.055), transparent 46%),
+    hsl(var(--surface) / 0.94);
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / 0.07),
+    var(--shadow-ascend);
+}
+
+.ascend-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.14), transparent 22rem);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.ascend-panel:hover::before {
+  opacity: 1;
+}
+
+.reveal-up {
+  animation: reveal-up 540ms cubic-bezier(0.21, 0.95, 0.24, 1) both;
+}
+
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-line::after {
+  animation: scan-line 5.6s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.36), transparent);
+  content: "";
+  height: 1px;
+  left: -35%;
+  position: absolute;
+  right: auto;
+  top: 0;
+  width: 35%;
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scan-line {
+  0%,
+  32% {
+    transform: translateX(0);
+  }
+  58%,
+  100% {
+    transform: translateX(390%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }

@@ -11,11 +11,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputId = id ?? props.name;
     return (
       <label className="grid gap-2 text-sm font-medium text-foreground" htmlFor={inputId}>
-        {label ? <span>{label}</span> : null}
+        {label ? <span className="text-muted">{label}</span> : null}
         <input
           id={inputId}
           className={cn(
-            "h-11 rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20",
+            "h-11 rounded-md border border-border bg-surface-raised/80 px-3 text-sm text-foreground outline-none transition duration-200 placeholder:text-muted-soft hover:border-border-strong focus:border-primary focus:bg-surface-elevated focus:shadow-[var(--shadow-focus)]",
             className
           )}
           ref={ref}
