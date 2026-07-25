@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model User {
+  id                      String                   @id @default(cuid())
+  name                    String?
+  email                   String                   @unique
+  normalizedEmail         String                   @unique
+  emailVerified           DateTime?
+  image                   String?
+  passwordHash            String
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  accounts                Account[]
+  sessions                Session[]
+  userSessions            UserSession[]
+  memberships             OrganizationMembership[]
+  notificationPreferences NotificationPreference[]
+  auditEvents             AuditEvent[]             @relation("AuditActor")
+  createdOrganizations    Organization[]           @relation("OrganizationCreator")
+  sentInvitations         Invitation[]             @relation("InvitationSender")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id             String   @id @default(cuid())
+  userId         String
+  sessionToken   String   @unique
+  lastSeenAt     DateTime @default(now())
+  expiresAt      DateTime
+  ipHash         String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id                      String                   @id @default(cuid())
+  name                    String
+  slug                    String                   @unique
+  website                 String?
+  timezone                String
+  createdById             String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  createdBy               User?                    @relation("OrganizationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  memberships             OrganizationMembership[]
+  roles                   Role[]
+  invitations             Invitation[]
+  auditEvents             AuditEvent[]
+  notificationPreferences NotificationPreference[]
+  branding                OrganizationBranding?
+}
+
+model OrganizationMembership {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  status         MembershipStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles          MembershipRole[]
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Role {
+  id             String           @id @default(cuid())
+  organizationId String
+  key            String
+  name           String
+  description    String?
+  system         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    RolePermission[]
+  memberships    MembershipRole[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model MembershipRole {
+  id           String                 @id @default(cuid())
+  membershipId String
+  roleId       String
+  membership   OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role         Role                   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, roleId])
+  @@index([roleId])
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  email          String
+  tokenHash      String           @unique
+  status         InvitationStatus @default(PENDING)
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User             @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+model AuditEvent {
+  id             String        @id @default(cuid())
+  organizationId String?
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  ipHash         String?
+  userAgent      String?
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor          User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([actorUserId])
+  @@index([action])
+}
+
+model NotificationPreference {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  productEmails  Boolean      @default(true)
+  activityDigest Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+model OrganizationBranding {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  logoUrl        String?
+  theme          String       @default("dark")
+  primaryColor   String       @default("#3B82F6")
+  accentColor    String       @default("#38BDF8")
+  surfaceColor   String       @default("#0F172A")
+  radius         String       @default("8px")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}

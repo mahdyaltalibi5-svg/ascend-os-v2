@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ascend
+      POSTGRES_PASSWORD: ascend_dev_password
+      POSTGRES_DB: ascend_os
+    ports:
+      - "5432:5432"
+    volumes:
+      - ascend-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ascend -d ascend_os"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ascend-postgres-data:

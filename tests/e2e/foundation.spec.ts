@@ -1,0 +1,36 @@
+import { expect, test } from "@playwright/test";
+
+test("primary foundation happy path", async ({ page }) => {
+  const unique = Date.now();
+  const email = `founder-${unique}@example.com`;
+  const password = "SecurePass123";
+
+  await page.goto("/signup");
+  await page.getByLabel("Name").fill("Milestone Founder");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible();
+  await page.getByLabel("Organization name").fill(`Ascend Test ${unique}`);
+  await page.getByLabel("Website").fill("https://example.com");
+  await page.getByRole("button", { name: "Create organization" }).click();
+
+  await expect(page.getByRole("heading", { name: "Founder Command Center" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Revenue/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Settings/ })).toBeVisible();
+
+  await page
+    .getByRole("button", { name: /Sign out/ })
+    .first()
+    .click();
+  await expect(page.getByRole("heading", { name: "Sign in to Ascend OS" })).toBeVisible();
+
+  await page.getByLabel("Email").fill("sales@ascend.local");
+  await page.getByLabel("Password").fill("AscendDev123!");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page.getByRole("heading", { name: "Sales Command Center" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Revenue/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Settings/ })).toHaveCount(0);
+});
