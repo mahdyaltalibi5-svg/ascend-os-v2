@@ -17,6 +17,8 @@ const config: Config = {
         "muted-soft": "hsl(var(--muted-soft))",
         primary: "hsl(var(--primary))",
         "primary-soft": "hsl(var(--primary-soft))",
+        "accent-warm": "hsl(var(--accent-warm))",
+        "accent-mint": "hsl(var(--accent-mint))",
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         danger: "hsl(var(--danger))"

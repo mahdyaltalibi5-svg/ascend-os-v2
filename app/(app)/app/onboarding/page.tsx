@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
 
+import { AscendMark } from "@/components/brand/ascend-mark";
 import { OnboardingForm } from "@/components/app/onboarding-form";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/server/auth";
@@ -19,9 +20,7 @@ export default async function OnboardingPage() {
       <div aria-hidden className="ascend-noise absolute inset-0" />
       <section className="reveal-up relative mx-auto grid w-full max-w-4xl gap-6">
         <div>
-          <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/35 bg-primary/15 text-sm font-black text-primary shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)]">
-            AO
-          </div>
+          <AscendMark className="mb-5" />
           <h1 className="text-4xl font-semibold tracking-normal md:text-5xl">
             Create your organization
           </h1>

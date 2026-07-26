@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Sparkles } from "lucide-react";
 
+import { AscendMark } from "@/components/brand/ascend-mark";
 import { SignoutButton } from "@/components/app/signout-button";
 import { Button } from "@/components/ui/button";
 import { appNavigation, canSeeNavItem } from "@/lib/navigation";
@@ -93,9 +94,7 @@ export function AppShell({
         <aside className="sticky top-0 hidden h-dvh border-r border-border bg-surface/72 p-4 shadow-[inset_-1px_0_0_hsl(var(--foreground)/0.03)] backdrop-blur lg:grid lg:grid-rows-[auto_1fr_auto]">
           <div className="mb-6">
             <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-md border border-primary/35 bg-primary/15 text-sm font-black text-primary shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)]">
-                AO
-              </div>
+              <AscendMark />
               <div className="rounded-sm border border-border bg-background/45 px-2 py-1 text-[11px] font-semibold uppercase text-muted-soft">
                 Foundation
               </div>
