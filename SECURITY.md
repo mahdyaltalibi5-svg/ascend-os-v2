@@ -12,6 +12,8 @@ Passwords are hashed with bcrypt. Auth errors are generic. Auth endpoints use va
 
 The active organization cookie is not trusted by itself. The server validates the selected organization against active memberships. Organization-owned records must include `organizationId`.
 
+Personal OS writes also include `userId` and are resolved from the signed-in session. The browser does not get to choose the active organization for priorities, goals, notes, focus blocks, daily plans, reviews, commands, or notifications.
+
 ## Secrets
 
 Use `.env` locally and managed secrets in production. Never expose `DATABASE_URL`, `NEXTAUTH_SECRET`, raw tokens, banking credentials, Stripe credentials, or AI provider keys to the client.
@@ -19,6 +21,12 @@ Use `.env` locally and managed secrets in production. Never expose `DATABASE_URL
 ## Audit Logs
 
 Audit events store safe metadata only. Passwords, raw tokens, payment details, and secrets must never be placed in audit metadata.
+
+Personal OS audit events cover priority create/edit/complete/reopen/archive/delete, focus create/start/pause/complete/cancel/duplicate, daily plan start, daily review completion, goal create/update/complete, note create/edit/archive/convert, and command execution. Metadata is limited to safe operational labels such as category, status, and counts.
+
+## Destructive Actions
+
+Operational records prefer archive or soft-delete timestamps over hard deletion. Server actions verify ownership and organization membership before mutating any record. Ambiguous command actions are ignored instead of guessed.
 
 ## PWA Caching
 
@@ -30,6 +38,8 @@ The service worker avoids caching `/api/*` and `/app/*` authenticated tenant dat
 - Rate limiting is process-local for Milestone 1.
 - CSP allows inline script/style needed by the current Next.js setup and should be tightened after deployment testing.
 - Playwright depends on a running local database and seeded data.
+- Database-backed integration tests require `TEST_DATABASE_URL` and must not target production.
+- Deterministic recommendations are not external AI output.
 
 ## Production-Hardening Checklist
 
@@ -41,3 +51,4 @@ The service worker avoids caching `/api/*` and `/app/*` authenticated tenant dat
 - Review CSP in the deployed environment.
 - Disable development seed users.
 - Add observability and error reporting.
+- Add row-level database policies if the deployment later introduces direct database access outside trusted server code.

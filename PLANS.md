@@ -187,3 +187,46 @@ The first application-level runtime blocker is database connectivity: the app de
 - Production smoke passed: throwaway account creation, organization onboarding, Founder dashboard load, priority write, focus-block write, operating-note write, and signout.
 - Local Playwright failed because local PostgreSQL at `localhost:5432` is not running in this workspace. The failure showed the expected database-unavailable message rather than a code exception.
 - GitHub shell push failed because this environment has no GitHub HTTPS credential or SSH key.
+
+## Final Personal OS and Founder Cockpit
+
+### Current repository and production state inspected
+
+- Branch: `main`.
+- Local `HEAD`: `d91cd35 Add personal command center`.
+- Remote `origin/main`: `d48e5ff Ignore local env and pnpm cache files`.
+- Local repository is ahead of GitHub by one commit because shell GitHub HTTPS and SSH authentication were unavailable in the previous pass.
+- Production URL `https://ascend-os-v2-app.vercel.app` is live.
+- Production `/api/health` returned healthy database connectivity before this implementation pass.
+- Current Personal OS production migration is `20260728012000_personal_os`.
+- Existing Personal OS models are `PersonalPriority`, `OperatingNote`, and `FocusBlock`.
+
+### Conflicts with the final Personal OS specification
+
+- Priority management is create/complete/archive only; it lacks edit, reopen, due date/time, categories, duration, revenue impact, pinning, manual ordering, today/week/later placement, and soft-delete metadata.
+- There is no `DailyPlan`, daily review, goals system, notification model, command parser, or recommendation engine.
+- Focus blocks do not have real timer state transitions or one-active-block enforcement.
+- Notes cannot be edited, archived, searched, categorized, tagged, or converted into priorities.
+- `/app` still contains deferred module shells rather than a complete Founder Daily Execution Cockpit.
+- Local E2E cannot pass until a non-production PostgreSQL database is available.
+- GitHub remains behind unless a secure GitHub credential/connector path succeeds.
+
+### Assumptions
+
+- This pass may safely make additive database changes and nullable backfills to preserve existing production data.
+- Deterministic recommendation logic should ship now; no external AI API should be required.
+- Accessible reorder controls are acceptable for this milestone; drag-and-drop can remain a later enhancement.
+- Soft archive is preferred for operational records; hard delete is allowed only where explicitly implemented as a user-confirmed action and still scoped server-side.
+- The Founder cockpit is the primary experience; Salesperson access should remain permission-shaped and not expose founder-only financial/admin surfaces.
+
+### Implementation sequence
+
+1. [ ] Add additive Prisma schema/migration for expanded priorities, daily plans, reviews, goals, notifications, focus states, and note metadata.
+2. [ ] Add validation, formatting, deterministic recommendation, command parsing, notification generation, and focus state helpers with unit tests.
+3. [ ] Replace Personal OS server actions with scoped CRUD/state-transition actions and audit events.
+4. [ ] Redesign `/app` as the Founder Daily Execution Cockpit with mobile-friendly sections and forms.
+5. [ ] Add daily planning, daily review, goals, note conversion, command input, notifications, and accessible priority reorder flows.
+6. [ ] Update documentation and Founder daily-use guide.
+7. [ ] Run validation commands and database-backed checks where available.
+8. [ ] Apply production migration, deploy to existing Vercel project, verify health/auth/persistence/mobile smoke.
+9. [ ] Commit in logical groups and attempt GitHub sync through secure available methods; otherwise report exact push commands.

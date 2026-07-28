@@ -4,9 +4,13 @@ import { registerSchema } from "@/lib/validation/auth";
 import { createOrganizationSchema } from "@/lib/validation/organization";
 import {
   commandItemIdSchema,
+  createGoalSchema,
   createFocusBlockSchema,
   createOperatingNoteSchema,
-  createPrioritySchema
+  createPrioritySchema,
+  dailyPlanSchema,
+  dailyReviewSchema,
+  editPrioritySchema
 } from "@/lib/validation/personal-os";
 
 describe("mutation validation", () => {
@@ -48,11 +52,23 @@ describe("mutation validation", () => {
     expect(
       createPrioritySchema.safeParse({
         title: "Ship Personal OS polish",
-        notes: "Keep it real and database-backed",
-        urgency: "critical"
+        description: "Keep it real and database-backed",
+        priorityLevel: "critical",
+        category: "product",
+        timeframe: "today",
+        dueDate: "2026-07-28",
+        dueTime: "14:30",
+        estimatedMinutes: "90",
+        estimatedRevenueImpact: "5000"
       }).success
     ).toBe(true);
-    expect(createPrioritySchema.safeParse({ title: "x", urgency: "urgent" }).success).toBe(false);
+    expect(
+      editPrioritySchema.safeParse({
+        id: "clz6x4v2m000008l4e6zafn0a",
+        title: "x",
+        priorityLevel: "urgent"
+      }).success
+    ).toBe(false);
   });
 
   it("validates operating notes and focus blocks", () => {
@@ -60,7 +76,9 @@ describe("mutation validation", () => {
       createOperatingNoteSchema.safeParse({
         title: "Launch note",
         body: "Keep white-label positioning deferred.",
-        pinned: true
+        pinned: true,
+        category: "decision",
+        tags: ["positioning"]
       }).success
     ).toBe(true);
     expect(
@@ -71,6 +89,24 @@ describe("mutation validation", () => {
       }).success
     ).toBe(true);
     expect(createOperatingNoteSchema.safeParse({ body: "" }).success).toBe(false);
+  });
+
+  it("validates goals, daily plans, and daily reviews", () => {
+    expect(
+      createGoalSchema.safeParse({
+        title: "Collect $50,000 this month",
+        goalType: "monthly",
+        category: "revenue",
+        metricType: "currency",
+        targetValue: "50000",
+        currentValue: "12000",
+        startDate: "2026-07-01",
+        endDate: "2026-07-31",
+        unit: "currency"
+      }).success
+    ).toBe(true);
+    expect(dailyPlanSchema.safeParse({ dailyIntention: "Ship the cockpit" }).success).toBe(true);
+    expect(dailyReviewSchema.safeParse({ founderRating: 11 }).success).toBe(false);
   });
 
   it("requires command item ids to be cuid values", () => {

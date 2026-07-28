@@ -1,6 +1,6 @@
 # Ascend OS
 
-Ascend OS is the secure application foundation for Ascend Web Development and future white-label SaaS tenants. Milestone 1.1 focuses on making the foundation actually run: install dependencies, connect PostgreSQL, migrate, seed, open the app, sign in, sign up, and verify the role-aware shell.
+Ascend OS is the Founder Personal OS for Ascend Web Development. It combines secure account access, organization scoping, daily planning, priorities, focus blocks, operating notes, goals, recommendations, notifications, and audit-backed activity in one production app.
 
 ## Stack
 
@@ -66,6 +66,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Push this repository to GitHub, then import it into Vercel as a Next.js project.
 
+Current production domain: `https://ascend-os-v2-app.vercel.app`.
+
+GitHub sync note: this local checkout may be ahead of `origin/main` when shell GitHub credentials are unavailable. Do not claim GitHub is current until `git push origin main` succeeds.
+
 Vercel environment variables:
 
 ```env
@@ -108,6 +112,30 @@ Never enable these automatically in production.
 - `pnpm run db:migrate:deploy` applies committed migrations.
 - `pnpm run db:seed` seeds local development data.
 - `pnpm run db:reset` destructively resets a non-production development database.
+
+## How to Use Ascend OS Every Day
+
+1. Start the day from `/app`.
+2. Review unfinished work and carry forward only what still matters.
+3. Set the daily intention, top three outcomes, and main risk.
+4. Read the Ascend recommendation and adjust the plan.
+5. Schedule focus blocks around the highest-value work.
+6. Work from the ordered priority list, using complete, reopen, archive, and reorder controls.
+7. Capture decisions, lessons, problems, and ideas as operating notes.
+8. Convert notes into priorities when they become action items.
+9. Update weekly or monthly goal progress manually.
+10. Complete the end-of-day review and set tomorrow's first action.
+
+## Personal OS Capabilities
+
+- Priorities: create, edit, complete, reopen, reorder, pin, archive, soft-delete, categorize, assign due dates/times, estimate duration, and estimate revenue impact.
+- Daily planning: one plan per user, organization, and calendar date, using the organization's timezone.
+- Daily review: fast end-of-day summary, blockers, carryover, removals, tomorrow's first action, and 1-10 founder rating.
+- Focus blocks: create, edit, start, pause, resume, complete, cancel, duplicate, relate to priorities, and preserve future calendar fields.
+- Goals: daily, weekly, monthly, and quarterly goals with manual progress and integration-ready fields.
+- Notes: create, edit, pin, archive, categorize, tag, and convert into priorities.
+- Recommendations: deterministic "Ascend recommendation" based on stored goals, priorities, due dates, revenue impact, focus capacity, and carryover count.
+- Notifications: in-app reminder candidates for overdue priorities, due critical work, focus timing, goal pace, daily planning/review, repeated carryover, and long-running focus.
 
 ## Health and Diagnostics
 

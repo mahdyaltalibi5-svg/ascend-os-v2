@@ -24,7 +24,7 @@ Ascend OS is first a personal operating system for running Ascend Web Developmen
 
 ## Milestone 1 Scope
 
-This milestone creates the application foundation plus the first real Personal OS surface: secure account access, organization tenancy, Founder and Salesperson roles, granular permissions, onboarding, protected dashboard shells, personal priorities, operating notes, focus blocks, PWA installability, audit logging, automated tests, and documentation.
+This milestone creates the application foundation plus the final Founder Personal OS surface for daily execution: secure account access, organization tenancy, Founder and Salesperson roles, granular permissions, onboarding, protected dashboard shells, priority management, daily planning, end-of-day reviews, operating notes, focus blocks, goals, deterministic recommendations, in-app notifications, PWA installability, audit logging, automated tests, and documentation.
 
 ## Deferred Features
 
@@ -32,4 +32,4 @@ Real lead generation, dialers, SMS, Stripe, banking, forecasting, client managem
 
 ## Core Daily Operating Loop
 
-The current daily loop is to sign in, choose the active organization, capture the few priorities that matter, plan focused work windows, save operating context, and mark real progress complete. Future milestones will expand that loop into lead, sales, client, revenue, fulfillment, and agent workflows.
+The current daily loop is to sign in, choose the active organization, start the day, review carryover, select top outcomes, accept or modify the Ascend recommendation, schedule focus blocks, work the ordered priority list, capture decisions and notes, update goals, complete the end-of-day review, and prepare tomorrow's first action. Future milestones will expand that loop into lead, sales, client, revenue, fulfillment, and agent workflows.
