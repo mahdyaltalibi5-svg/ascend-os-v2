@@ -436,13 +436,17 @@ function PriorityList({
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              <TinyForm action={completePersonalPriorityAction} id={priority.id} label="Complete">
+              <TinyForm
+                action={completePersonalPriorityAction}
+                id={priority.id}
+                label="Complete priority"
+              >
                 <CheckCircle2 aria-hidden className="h-4 w-4" />
               </TinyForm>
               <TinyForm
                 action={movePriorityAction}
                 id={priority.id}
-                label="Move up"
+                label="Move priority up"
                 extra={{ direction: "up" }}
               >
                 <ArrowUp aria-hidden className="h-4 w-4" />
@@ -450,15 +454,23 @@ function PriorityList({
               <TinyForm
                 action={movePriorityAction}
                 id={priority.id}
-                label="Move down"
+                label="Move priority down"
                 extra={{ direction: "down" }}
               >
                 <ArrowDown aria-hidden className="h-4 w-4" />
               </TinyForm>
-              <TinyForm action={archivePersonalPriorityAction} id={priority.id} label="Archive">
+              <TinyForm
+                action={archivePersonalPriorityAction}
+                id={priority.id}
+                label="Archive priority"
+              >
                 <Archive aria-hidden className="h-4 w-4" />
               </TinyForm>
-              <TinyForm action={deletePersonalPriorityAction} id={priority.id} label="Delete">
+              <TinyForm
+                action={deletePersonalPriorityAction}
+                id={priority.id}
+                label="Delete priority"
+              >
                 <Trash2 aria-hidden className="h-4 w-4" />
               </TinyForm>
             </div>
@@ -616,15 +628,27 @@ function FocusPanel({ data }: { data: PersonalCommandData }) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {active.status === "ACTIVE" ? (
-              <TinyForm action={pauseFocusBlockAction} id={active.id} label="Pause">
+              <TinyForm
+                action={pauseFocusBlockAction}
+                id={active.id}
+                label="Pause active focus block"
+              >
                 <Pause aria-hidden className="h-4 w-4" />
               </TinyForm>
             ) : (
-              <TinyForm action={startFocusBlockAction} id={active.id} label="Resume">
+              <TinyForm
+                action={startFocusBlockAction}
+                id={active.id}
+                label="Resume active focus block"
+              >
                 <Play aria-hidden className="h-4 w-4" />
               </TinyForm>
             )}
-            <TinyForm action={completeFocusBlockAction} id={active.id} label="Complete">
+            <TinyForm
+              action={completeFocusBlockAction}
+              id={active.id}
+              label="Complete active focus block"
+            >
               <CheckCircle2 aria-hidden className="h-4 w-4" />
             </TinyForm>
           </div>
@@ -651,16 +675,28 @@ function FocusPanel({ data }: { data: PersonalCommandData }) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  <TinyForm action={startFocusBlockAction} id={block.id} label="Start">
+                  <TinyForm action={startFocusBlockAction} id={block.id} label="Start focus block">
                     <Play aria-hidden className="h-4 w-4" />
                   </TinyForm>
-                  <TinyForm action={completeFocusBlockAction} id={block.id} label="Complete">
+                  <TinyForm
+                    action={completeFocusBlockAction}
+                    id={block.id}
+                    label="Complete focus block"
+                  >
                     <CheckCircle2 aria-hidden className="h-4 w-4" />
                   </TinyForm>
-                  <TinyForm action={duplicateFocusBlockAction} id={block.id} label="Duplicate">
+                  <TinyForm
+                    action={duplicateFocusBlockAction}
+                    id={block.id}
+                    label="Duplicate focus block"
+                  >
                     <Copy aria-hidden className="h-4 w-4" />
                   </TinyForm>
-                  <TinyForm action={cancelFocusBlockAction} id={block.id} label="Cancel">
+                  <TinyForm
+                    action={cancelFocusBlockAction}
+                    id={block.id}
+                    label="Cancel focus block"
+                  >
                     <X aria-hidden className="h-4 w-4" />
                   </TinyForm>
                 </div>
