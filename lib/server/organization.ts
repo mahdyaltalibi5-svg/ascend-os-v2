@@ -263,10 +263,6 @@ export async function getActiveOrganizationId(userId: string) {
     requestedOrgId
   );
 
-  if (!selectedId) return null;
-  if (selectedId !== requestedOrgId) {
-    await setActiveOrganization(userId, selectedId);
-  }
   return selectedId;
 }
 
