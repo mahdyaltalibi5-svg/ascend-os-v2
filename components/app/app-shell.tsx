@@ -96,14 +96,14 @@ export function AppShell({
             <div className="mb-5 flex items-center gap-3">
               <AscendMark />
               <div className="rounded-sm border border-border bg-background/45 px-2 py-1 text-[11px] font-semibold uppercase text-muted-soft">
-                Foundation
+                Personal OS
               </div>
             </div>
             <p className="truncate text-sm font-semibold text-foreground">{organizationName}</p>
             <p className="truncate text-xs text-muted">{userEmail}</p>
             <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-background/35 px-3 py-2 text-xs text-muted">
               <Sparkles aria-hidden className="h-3.5 w-3.5 text-primary" />
-              Milestone shell active
+              Command layer active
             </div>
           </div>
           {nav}

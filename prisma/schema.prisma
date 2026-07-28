@@ -20,6 +20,18 @@ enum InvitationStatus {
   EXPIRED
 }
 
+enum PersonalItemStatus {
+  OPEN
+  DONE
+  ARCHIVED
+}
+
+enum FocusBlockStatus {
+  PLANNED
+  DONE
+  SKIPPED
+}
+
 model User {
   id                      String                   @id @default(cuid())
   name                    String?
@@ -38,6 +50,9 @@ model User {
   auditEvents             AuditEvent[]             @relation("AuditActor")
   createdOrganizations    Organization[]           @relation("OrganizationCreator")
   sentInvitations         Invitation[]             @relation("InvitationSender")
+  personalPriorities      PersonalPriority[]
+  operatingNotes          OperatingNote[]
+  focusBlocks             FocusBlock[]
 }
 
 model Account {
@@ -102,6 +117,9 @@ model Organization {
   auditEvents             AuditEvent[]
   notificationPreferences NotificationPreference[]
   branding                OrganizationBranding?
+  personalPriorities      PersonalPriority[]
+  operatingNotes          OperatingNote[]
+  focusBlocks             FocusBlock[]
 }
 
 model OrganizationMembership {
@@ -230,4 +248,57 @@ model OrganizationBranding {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model PersonalPriority {
+  id             String             @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  notes          String?
+  status         PersonalItemStatus @default(OPEN)
+  urgency        String             @default("normal")
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, status, createdAt])
+  @@index([userId, status])
+}
+
+model OperatingNote {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String?
+  body           String
+  pinned         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, pinned, createdAt])
+  @@index([userId, createdAt])
+}
+
+model FocusBlock {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  windowLabel    String
+  intention      String?
+  status         FocusBlockStatus @default(PLANNED)
+  startsAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, status, createdAt])
+  @@index([userId, status])
 }

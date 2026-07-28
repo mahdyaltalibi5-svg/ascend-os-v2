@@ -16,25 +16,37 @@ import type { LucideIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PersonalCommandCenter } from "@/components/app/personal-command-center";
 import { getCurrentSession } from "@/lib/server/auth";
 import { requireOrganizationContext } from "@/lib/server/organization";
+import { getPersonalCommandData } from "@/lib/server/personal-os";
 
 export default async function AppDashboardPage() {
   const session = await getCurrentSession();
   if (!session?.user?.id) redirect("/signin");
 
   const context = await requireOrganizationContext(session.user.id);
+  const personalCommandData = await getPersonalCommandData({
+    userId: session.user.id,
+    organizationId: context.organization.id
+  });
   const founderLike =
     context.permissions.includes("revenue.view") || context.permissions.includes("audit.view");
 
   return founderLike ? (
-    <FounderDashboard organizationName={context.organization.name} />
+    <FounderDashboard data={personalCommandData} organizationName={context.organization.name} />
   ) : (
-    <SalespersonDashboard organizationName={context.organization.name} />
+    <SalespersonDashboard data={personalCommandData} organizationName={context.organization.name} />
   );
 }
 
-function FounderDashboard({ organizationName }: { organizationName: string }) {
+function FounderDashboard({
+  data,
+  organizationName
+}: {
+  data: Awaited<ReturnType<typeof getPersonalCommandData>>;
+  organizationName: string;
+}) {
   const tiles: Array<[string, string, LucideIcon]> = [
     ["Revenue goal", "Revenue goals will be configured in Milestone 2.", CircleDollarSign],
     ["Cash collected", "Connect Stripe to display cash collected.", TrendingUp],
@@ -58,22 +70,23 @@ function FounderDashboard({ organizationName }: { organizationName: string }) {
     <section className="reveal-up grid gap-6">
       <PageHeader
         title="Founder Command Center"
-        description={`${organizationName} is ready for secure foundation work. Live metrics are intentionally deferred.`}
+        description={`${organizationName} now has a real personal command layer. Capture priorities, notes, and focus blocks while revenue and integration modules stay honest until connected.`}
         eyebrow="Ascend OS"
-        mode="Founder workspace"
+        mode="Personal OS"
       />
+      <PersonalCommandCenter data={data} />
       <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
         <Card className="scan-line min-h-72 p-0">
           <div className="grid h-full gap-6 p-5 md:grid-cols-[0.9fr_1.1fr]">
             <div className="flex flex-col justify-between gap-8">
               <div>
-                <p className="text-sm font-semibold text-primary">Operating layer</p>
+                <p className="text-sm font-semibold text-primary">Agency command layer</p>
                 <h2 className="mt-3 text-2xl font-semibold tracking-normal text-foreground">
-                  Foundation is online. Metrics are waiting for real sources.
+                  Personal OS is online. Integrations wait for real sources.
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-muted">
-                  The command center is scoped to {organizationName}, with permission-aware
-                  navigation and audit-ready organization actions.
+                  The command center is scoped to {organizationName}, with your priorities and notes
+                  separated from deferred Stripe, dialer, client, and agent data.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -139,7 +152,7 @@ function FounderDashboard({ organizationName }: { organizationName: string }) {
       <div className="grid gap-4 xl:grid-cols-3">
         <EmptyState
           title="Today's priorities"
-          description="Priorities will be configured in Milestone 2."
+          description="Use Personal Command above for real priorities. Team-wide priority automation can arrive later."
         />
         <EmptyState
           title="Founder brief"
@@ -165,7 +178,13 @@ function FounderDashboard({ organizationName }: { organizationName: string }) {
   );
 }
 
-function SalespersonDashboard({ organizationName }: { organizationName: string }) {
+function SalespersonDashboard({
+  data,
+  organizationName
+}: {
+  data: Awaited<ReturnType<typeof getPersonalCommandData>>;
+  organizationName: string;
+}) {
   const tiles: Array<[string, string, LucideIcon]> = [
     [
       "Today's queue",
@@ -200,10 +219,11 @@ function SalespersonDashboard({ organizationName }: { organizationName: string }
     <section className="reveal-up grid gap-6">
       <PageHeader
         title="Sales Command Center"
-        description={`${organizationName} sales access is active. Founder-only financial and administrative surfaces are hidden.`}
+        description={`${organizationName} sales access is active. Use the personal command layer while founder-only financial and administrative surfaces stay hidden.`}
         eyebrow="Ascend OS"
-        mode="Sales workspace"
+        mode="Personal OS"
       />
+      <PersonalCommandCenter data={data} />
       <Card className="scan-line">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>

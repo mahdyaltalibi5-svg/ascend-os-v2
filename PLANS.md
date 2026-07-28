@@ -142,3 +142,48 @@ The first application-level runtime blocker is database connectivity: the app de
 - The PWA service worker will cache only static shell assets and the offline fallback, not authenticated API responses or tenant data.
 - The implementation validates successfully for formatting, lint, typecheck, unit tests, and production build in this environment.
 - Docker/PostgreSQL-dependent migration, seed, and Playwright happy-path execution remain to be verified on a machine with Docker available.
+
+## Personal OS completion pass
+
+### Current repository state inspected
+
+- Re-read the future-agent instructions, product documentation, architecture notes, Prisma schema, protected dashboard, app shell, and current tests before editing.
+- The repository already had a secure Milestone 1 foundation, production Vercel wiring, a public GitHub repository, and a connected production Prisma Postgres database.
+- The app still felt too much like a foundation shell for the owner's current need: it had honest empty states, but not enough real day-to-day operating utility.
+
+### Conflicts with the latest product direction
+
+- White-label language was too prominent for the current phase. The product should stay focused on the internal Personal OS for Ascend Web Development.
+- The dashboard needed real saved personal operating state instead of only future-module empty states.
+- The visual system leaned too much on familiar dark glass patterns and needed a more restrained, denser command-surface treatment.
+
+### Assumptions
+
+- Personal OS data should remain scoped to both the active organization and the signed-in user.
+- Founder and Salesperson users can both use personal priorities, notes, and focus blocks, while founder-only financial/admin navigation remains permission-gated.
+- White-label architecture can remain possible through tenant boundaries, but white-label product positioning is deferred.
+
+### Implementation sequence
+
+1. [x] Add Prisma models and migration for personal priorities, operating notes, and focus blocks.
+2. [x] Add validation schemas for personal OS mutations.
+3. [x] Add server actions that resolve the active organization server-side, enforce user/org ownership, and write audit events.
+4. [x] Render a real Personal Command Center on Founder and Salesperson dashboards.
+5. [x] Improve dashboard copy and shell labels around Personal OS instead of foundation-only language.
+6. [x] Update product, architecture, and data-model documentation.
+7. [x] Add focused automated tests for the new validation surface.
+8. [x] Run validation, migrate production, deploy, and smoke test.
+
+### Verification results
+
+- Prisma Client generation passed.
+- Formatting passed.
+- Lint passed.
+- Typecheck passed.
+- Unit tests passed: 5 files, 14 tests.
+- Production build passed.
+- Production database migration passed.
+- Vercel production deployment passed and was aliased to `https://ascend-os-v2-app.vercel.app`.
+- Production smoke passed: throwaway account creation, organization onboarding, Founder dashboard load, priority write, focus-block write, operating-note write, and signout.
+- Local Playwright failed because local PostgreSQL at `localhost:5432` is not running in this workspace. The failure showed the expected database-unavailable message rather than a code exception.
+- GitHub shell push failed because this environment has no GitHub HTTPS credential or SSH key.

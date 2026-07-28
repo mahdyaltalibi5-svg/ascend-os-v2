@@ -11,6 +11,11 @@
 - `AuditEvent`: immutable security and operational event trail.
 - `NotificationPreference`: user preferences scoped to an organization.
 - `OrganizationBranding`: data-backed theme, colors, logo URL, and radius.
+- `PersonalPriority`: user-owned priority item scoped to an organization, with open/done/archived state, urgency, notes, and completion time.
+- `OperatingNote`: user-owned operating note scoped to an organization, with optional title and pinned state.
+- `FocusBlock`: user-owned planned focus window scoped to an organization, with intention and planned/done/skipped state.
 - `Account`, `Session`, `VerificationToken`, `UserSession`: authentication-compatible entities and future session tracking.
 
 Future business-owned tables must include `organizationId`, enforce server-side membership checks, and never rely only on frontend filtering.
+
+Personal OS tables should usually include both `organizationId` and `userId` so personal work remains private to the user while still living inside the active organization boundary.

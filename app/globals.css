@@ -69,9 +69,15 @@ body {
       hsl(var(--accent-warm) / 0.055) 70.15% 70.32%,
       transparent 70.5%
     ),
-    radial-gradient(circle at 22% -15%, hsl(var(--primary) / 0.16), transparent 32rem),
-    radial-gradient(circle at 95% 6%, hsl(var(--accent-mint) / 0.075), transparent 26rem),
+    linear-gradient(90deg, hsl(var(--primary) / 0.045) 0 1px, transparent 1px),
+    linear-gradient(180deg, hsl(var(--foreground) / 0.035) 0 1px, transparent 1px),
     linear-gradient(180deg, hsl(219 38% 6%), hsl(var(--background)) 42rem);
+  background-size:
+    auto,
+    auto,
+    92px 92px,
+    92px 92px,
+    auto;
   color: hsl(var(--foreground));
 }
 
@@ -136,6 +142,43 @@ select {
 
 .ascend-panel:hover::before {
   opacity: 1;
+}
+
+.ascend-command-card {
+  background:
+    linear-gradient(180deg, hsl(var(--foreground) / 0.07), transparent 44%),
+    linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent 34rem),
+    hsl(var(--surface) / 0.96);
+}
+
+.ascend-input {
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  background: hsl(var(--surface-raised) / 0.82);
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  outline: none;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+}
+
+.ascend-input::placeholder {
+  color: hsl(var(--muted-soft));
+}
+
+.ascend-input:hover {
+  border-color: hsl(var(--border-strong));
+}
+
+.ascend-input:focus {
+  background: hsl(var(--surface-elevated));
+  border-color: hsl(var(--primary));
+  box-shadow: var(--shadow-focus);
 }
 
 .reveal-up {
