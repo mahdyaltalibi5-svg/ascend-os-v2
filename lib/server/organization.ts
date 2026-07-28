@@ -16,6 +16,7 @@ import { prisma } from "@/lib/server/db";
 import { writeAuditEvent } from "@/lib/server/audit";
 import { hashForStorage, randomToken } from "@/lib/server/crypto";
 import { normalizeEmail, slugify } from "@/lib/utils";
+import { defaultServiceOfferings } from "@/lib/revenue/constants";
 
 const ACTIVE_ORG_COOKIE = "ascend_active_org";
 
@@ -74,6 +75,28 @@ export async function ensureDefaultRolesForOrganization(tx: Tx, organizationId: 
   return { founderRole, salespersonRole };
 }
 
+export async function ensureDefaultServiceOfferings(tx: Tx, organizationId: string) {
+  await Promise.all(
+    defaultServiceOfferings.map((service) =>
+      tx.serviceOffering.upsert({
+        where: { organizationId_name: { organizationId, name: service.name } },
+        update: {
+          revenueCategory: service.revenueCategory,
+          billingType: service.billingType,
+          active: true
+        },
+        create: {
+          organizationId,
+          name: service.name,
+          revenueCategory: service.revenueCategory,
+          billingType: service.billingType,
+          active: true
+        }
+      })
+    )
+  );
+}
+
 async function assignPermissionsToRole(tx: Tx, roleId: string, permissions: PermissionKey[]) {
   const records = await tx.permission.findMany({
     where: { key: { in: permissions } }
@@ -123,6 +146,7 @@ export async function createOrganizationForUser(input: {
     });
 
     const { founderRole } = await ensureDefaultRolesForOrganization(tx, created.id);
+    await ensureDefaultServiceOfferings(tx, created.id);
 
     const membership = await tx.organizationMembership.create({
       data: {
@@ -295,6 +319,14 @@ export async function setActiveOrganization(userId: string, organizationId: stri
 export async function getOrganizationContext(userId: string) {
   const activeOrganizationId = await getActiveOrganizationId(userId);
   if (!activeOrganizationId) return null;
+
+  await ensureDefaultRolesForOrganization(prisma, activeOrganizationId);
+  const serviceCount = await prisma.serviceOffering.count({
+    where: { organizationId: activeOrganizationId }
+  });
+  if (serviceCount === 0) {
+    await ensureDefaultServiceOfferings(prisma, activeOrganizationId);
+  }
 
   const membership = await getMembership(userId, activeOrganizationId);
   if (!membership) return null;

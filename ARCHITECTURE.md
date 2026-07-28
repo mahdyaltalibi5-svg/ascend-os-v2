@@ -1,5 +1,13 @@
 # Architecture
 
+## Revenue Command Center
+
+Revenue lives behind `/app/revenue` and is served from a dedicated read service in `lib/server/revenue.ts`. Components render derived totals from that service instead of recalculating financial metrics independently.
+
+Financial writes are implemented as server actions in `app/(app)/app/revenue/actions.ts`. Each action resolves the signed-in user and active organization server-side, checks granular permissions, validates linked records by organization, writes audit events, and revalidates `/app` plus `/app/revenue`.
+
+Stored money uses integer cents in Prisma models. Forecasting, pace, MRR, outstanding, overdue, and refund calculations live in `lib/revenue/*`. Stripe is intentionally not connected; provider/external ID/sync fields prepare the boundary for a future integration service.
+
 ## Frontend
 
 The app uses the Next.js App Router. Auth pages live under `app/(auth)`, protected application routes under `app/(app)/app`, reusable controls under `components/ui`, and shell components under `components/app`.

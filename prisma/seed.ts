@@ -6,6 +6,7 @@ import {
   salespersonPermissions,
   type PermissionKey
 } from "../lib/permissions";
+import { defaultServiceOfferings } from "../lib/revenue/constants";
 import { hashPassword } from "../lib/server/crypto";
 
 const prisma = new PrismaClient();
@@ -119,6 +120,7 @@ async function main() {
 
   await assignPermissions(founderRole.id, founderPermissions);
   await assignPermissions(salespersonRole.id, salespersonPermissions);
+  await seedServiceOfferings(organization.id);
 
   const founderMembership = await prisma.organizationMembership.upsert({
     where: { organizationId_userId: { organizationId: organization.id, userId: founder.id } },
@@ -208,6 +210,26 @@ async function assignPermissions(roleId: string, permissions: PermissionKey[]) {
       where: { roleId_permissionId: { roleId, permissionId: permission.id } },
       update: {},
       create: { roleId, permissionId: permission.id }
+    });
+  }
+}
+
+async function seedServiceOfferings(organizationId: string) {
+  for (const service of defaultServiceOfferings) {
+    await prisma.serviceOffering.upsert({
+      where: { organizationId_name: { organizationId, name: service.name } },
+      update: {
+        revenueCategory: service.revenueCategory,
+        billingType: service.billingType,
+        active: true
+      },
+      create: {
+        organizationId,
+        name: service.name,
+        revenueCategory: service.revenueCategory,
+        billingType: service.billingType,
+        active: true
+      }
     });
   }
 }

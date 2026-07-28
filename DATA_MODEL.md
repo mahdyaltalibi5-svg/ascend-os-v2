@@ -17,6 +17,15 @@
 - `DailyPlan`: one daily planning/review record per organization, user, and date key, storing intention, top outcomes, risk, status, review answers, rating, and tomorrow's first action.
 - `Goal`: user-owned daily/weekly/monthly/quarterly goal scoped to an organization, with metric type, unit, target, current progress, date range, status, owner, and completion/archive timestamps.
 - `InAppNotification`: user-owned notification candidate scoped to an organization, with type, message, related entity, read time, dismiss time, and creation time.
+- `RevenueGoal`: organization-owned financial goal with goal type, period, start/end dates, target cents, primary flag, owner, status, and notes.
+- `Client`: lightweight organization-owned client record with contact details, status, source, notes, archival timestamp, and future external sync fields.
+- `ServiceOffering`: editable organization-owned service catalog record with revenue category, billing type, optional default price cents, active state, and future provider sync fields.
+- `RevenueContract`: organization-owned sold engagement linking client and optional service, with contracted cents, billing type, status, signed/start/end dates, MRR cents, deposit cents, and archival state.
+- `Invoice`: organization-owned invoice linked to a client and optional contract, with total/paid/outstanding cents, issue date, due date, status, currency, provider fields, paid time, and archival state.
+- `Payment`: organization-owned payment linked to client and optional invoice/contract, with amount cents, method, status, idempotency key, refund fields, provider fields, and payment date.
+- `RecurringRevenueSchedule`: organization-owned expected recurring revenue record linked to client and contract, with amount cents, frequency, status, start/end dates, and next expected date.
+- `RevenueForecastSnapshot`: immutable organization-owned forecast snapshot storing worst/expected/best cents, period totals, MRR, overdue amount, and safe assumptions JSON.
+- `RevenueAdjustment`: organization-owned correction/refund/write-off/credit/fee record that preserves financial history instead of silently mutating old records.
 - `Account`, `Session`, `VerificationToken`, `UserSession`: authentication-compatible entities and future session tracking.
 
 Future business-owned tables must include `organizationId`, enforce server-side membership checks, and never rely only on frontend filtering.
@@ -24,3 +33,5 @@ Future business-owned tables must include `organizationId`, enforce server-side 
 Personal OS tables should usually include both `organizationId` and `userId` so personal work remains private to the user while still living inside the active organization boundary.
 
 Daily plans must remain unique on `(organizationId, userId, dateKey)`. Focus blocks should keep timestamp and `calendarEventId` fields populated correctly so future calendar sync does not need a redesign.
+
+Revenue tables use integer cents for stored money. Future financial tables must keep `organizationId`, avoid hard deletes, validate linked records by organization, and prefer adjustment records over silent historical rewrites.

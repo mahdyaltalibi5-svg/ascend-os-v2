@@ -1,6 +1,6 @@
 # Ascend OS
 
-Ascend OS is the Founder Personal OS for Ascend Web Development. It combines secure account access, organization scoping, daily planning, priorities, focus blocks, operating notes, goals, recommendations, notifications, and audit-backed activity in one production app.
+Ascend OS is the Founder Personal OS for Ascend Web Development. It combines secure account access, organization scoping, daily planning, priorities, focus blocks, operating notes, goals, recommendations, notifications, audit-backed activity, and a manual Revenue Command Center in one production app.
 
 ## Stack
 
@@ -13,6 +13,12 @@ Ascend OS is the Founder Personal OS for Ascend Web Development. It combines sec
 - pnpm via Corepack
 - GitHub Actions validation
 - Vercel-ready deployment config
+
+## Revenue Command Center
+
+Milestone 2 adds `/app/revenue`, a Founder-only manual revenue operating center. It supports revenue goals, clients, service offerings, contracts, invoices, payments, recurring revenue, forecast snapshots, adjustments, CSV export, deterministic recommendations, and Personal OS priority creation from revenue issues.
+
+Manual revenue tracking is active. Stripe is not connected. See `REVENUE_SYSTEM.md` for financial rules, forecast assumptions, and future integration boundaries.
 
 ## Quick Start: Docker PostgreSQL
 

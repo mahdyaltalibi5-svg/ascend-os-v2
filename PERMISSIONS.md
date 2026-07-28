@@ -4,9 +4,9 @@ Permission keys use dot notation: `domain.action` or `domain.scope_action`.
 
 ## Founder
 
-Founder receives all initial permissions:
+Founder receives all initial permissions, including full revenue access:
 
-`dashboard.view`, `goals.view`, `goals.manage`, `leads.view`, `leads.manage`, `calls.view_own`, `calls.view_all`, `pipeline.view_own`, `pipeline.view_all`, `clients.view`, `revenue.view`, `team.view`, `team.manage`, `roles.manage`, `integrations.manage`, `organization.manage`, `audit.view`, `agents.view`, `agents.manage`.
+`dashboard.view`, `goals.view`, `goals.manage`, `leads.view`, `leads.manage`, `calls.view_own`, `calls.view_all`, `pipeline.view_own`, `pipeline.view_all`, `clients.view`, `clients.manage`, `revenue.view`, `revenue.manage`, `revenue.goals.manage`, `revenue.contracts.manage`, `revenue.invoices.manage`, `revenue.payments.manage`, `revenue.forecasts.view`, `revenue.forecasts.manage`, `services.view`, `services.manage`, `team.view`, `team.manage`, `roles.manage`, `integrations.manage`, `organization.manage`, `audit.view`, `agents.view`, `agents.manage`.
 
 ## Salesperson
 
@@ -15,6 +15,20 @@ Salesperson receives sales-focused permissions only:
 `dashboard.view`, `leads.view`, `leads.manage`, `calls.view_own`, `pipeline.view_own`, `clients.view`, `agents.view`.
 
 Salesperson does not receive financial, banking, role administration, organization management, integration management, or full audit access.
+
+## Revenue Permissions
+
+- `revenue.view`: view the Revenue Command Center.
+- `revenue.manage`: manage general revenue records such as recurring schedules.
+- `revenue.goals.manage`: create and update revenue goals.
+- `revenue.contracts.manage`: create and update revenue contracts.
+- `revenue.invoices.manage`: create and update invoices.
+- `revenue.payments.manage`: record payments, refunds, and adjustments.
+- `revenue.forecasts.view`: view forecast snapshots.
+- `revenue.forecasts.manage`: create forecast snapshots.
+- `clients.manage`: create and update clients.
+- `services.view`: view service offerings.
+- `services.manage`: create and update service offerings.
 
 ## Adding Permissions
 

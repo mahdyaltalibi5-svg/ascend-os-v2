@@ -1,3 +1,5 @@
+import { parseRevenueCommand, type RevenueCommand } from "@/lib/revenue/commands";
+
 export type ParsedCommand =
   | { kind: "add_priority"; title: string; priorityLevel: string; timeframe: string }
   | { kind: "schedule_focus"; title: string; plannedMinutes: number; windowLabel: string }
@@ -9,6 +11,7 @@ export type ParsedCommand =
   | { kind: "carry_forward" }
   | { kind: "start_next_focus" }
   | { kind: "end_day" }
+  | { kind: "revenue"; command: RevenueCommand }
   | { kind: "unknown"; message: string };
 
 export function parsePersonalCommand(input: string): ParsedCommand {
@@ -16,6 +19,9 @@ export function parsePersonalCommand(input: string): ParsedCommand {
   const lower = command.toLowerCase();
 
   if (!command) return { kind: "unknown", message: "Enter a command first." };
+
+  const revenueCommand = parseRevenueCommand(command);
+  if (revenueCommand) return { kind: "revenue", command: revenueCommand };
 
   if (lower.includes("what should i work") || lower.includes("highest-value")) {
     return { kind: "recommend_next" };

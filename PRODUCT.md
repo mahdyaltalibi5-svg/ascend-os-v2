@@ -26,6 +26,12 @@ Ascend OS is first a personal operating system for running Ascend Web Developmen
 
 This milestone creates the application foundation plus the final Founder Personal OS surface for daily execution: secure account access, organization tenancy, Founder and Salesperson roles, granular permissions, onboarding, protected dashboard shells, priority management, daily planning, end-of-day reviews, operating notes, focus blocks, goals, deterministic recommendations, in-app notifications, PWA installability, audit logging, automated tests, and documentation.
 
+## Milestone 2 Scope
+
+Milestone 2 adds the first complete Revenue Command Center for manual financial operations. The Founder can set revenue goals, add clients and services, record contracts, create invoices, record payments, track recurring revenue, create forecast snapshots, export CSVs, review deterministic revenue recommendations, and convert revenue issues into Personal OS priorities.
+
+Stripe, banking, bookkeeping, CRM pipelines, ads attribution, and AI finance agents remain deferred. Revenue numbers shown in the app come from stored Ascend OS records only.
+
 ## Deferred Features
 
 Real lead generation, dialers, SMS, Stripe, banking, forecasting, client management, contracts, advertising APIs, social publishing, autonomous AI agents, OpenAI or Claude usage, Mac mini workers, workflow builders, and white-label billing are intentionally deferred. Current product language should stay focused on the internal personal/agency OS, not white-label positioning.

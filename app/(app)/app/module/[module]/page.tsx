@@ -21,6 +21,8 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
   if (!session?.user?.id) redirect("/signin");
 
   const { module } = await params;
+  if (module === "revenue") redirect("/app/revenue");
+
   const href = moduleBySlug[module];
   if (!href) notFound();
 

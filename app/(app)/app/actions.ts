@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { parsePersonalCommand } from "@/lib/personal-os/commands";
 import { focusedMinutesBetween } from "@/lib/personal-os/focus";
 import { parseDateInput } from "@/lib/personal-os/formatting";
+import { formatMoney } from "@/lib/revenue/formatting";
+import { monthPeriod, periodForGoal as revenuePeriodForGoal } from "@/lib/revenue/periods";
 import { writeAuditEvent } from "@/lib/server/audit";
 import { getCurrentSession } from "@/lib/server/auth";
 import { prisma } from "@/lib/server/db";
@@ -51,7 +53,8 @@ async function requirePersonalCommandContext() {
   return {
     userId: session.user.id,
     organizationId: context.organization.id,
-    timezone: context.organization.timezone
+    timezone: context.organization.timezone,
+    permissions: context.permissions
   };
 }
 
@@ -768,7 +771,126 @@ async function executeParsedCommand(
         ownerId: context.userId
       }
     });
+  } else if (command.kind === "revenue") {
+    await executeRevenueCommand(context, command.command);
   }
+}
+
+async function executeRevenueCommand(
+  context: Awaited<ReturnType<typeof requirePersonalCommandContext>>,
+  command: Extract<ReturnType<typeof parsePersonalCommand>, { kind: "revenue" }>["command"]
+) {
+  const hasRevenueView = context.permissions.includes("revenue.view");
+  if (!hasRevenueView) return;
+
+  if (command.type === "set_goal") {
+    if (!context.permissions.includes("revenue.goals.manage")) return;
+    const period = revenuePeriodForGoal(command.period, new Date(), context.timezone);
+    await prisma.revenueGoal.create({
+      data: {
+        organizationId: context.organizationId,
+        ownerUserId: context.userId,
+        name: "Monthly cash collected",
+        goalPeriod: command.period,
+        goalType: "cash_collected",
+        startDate: period.start,
+        endDate: period.end,
+        targetAmountCents: command.amountCents,
+        primary: true
+      }
+    });
+    return;
+  }
+
+  if (command.type === "create_priority_largest_overdue") {
+    const invoice = await prisma.invoice.findFirst({
+      where: {
+        organizationId: context.organizationId,
+        status: { in: ["open", "partially_paid", "overdue"] },
+        amountOutstandingCents: { gt: 0 },
+        dueDate: { lt: new Date() },
+        archivedAt: null
+      },
+      include: { client: true },
+      orderBy: { amountOutstandingCents: "desc" }
+    });
+    if (invoice) {
+      await prisma.personalPriority.create({
+        data: {
+          organizationId: context.organizationId,
+          userId: context.userId,
+          title: `Follow up on overdue invoice from ${invoice.client.businessName}`,
+          description: `${formatMoney(invoice.amountOutstandingCents)} outstanding.`,
+          category: "revenue",
+          priorityLevel: "high",
+          urgency: "high",
+          timeframe: "today",
+          estimatedRevenueImpact: invoice.amountOutstandingCents / 100
+        }
+      });
+    }
+    return;
+  }
+
+  if (
+    command.type === "show_overdue" ||
+    command.type === "show_expected" ||
+    command.type === "goal_gap"
+  ) {
+    const period = monthPeriod(new Date(), context.timezone);
+    const [invoices, goal, payments] = await Promise.all([
+      prisma.invoice.findMany({
+        where: { organizationId: context.organizationId, archivedAt: null },
+        include: { client: true }
+      }),
+      prisma.revenueGoal.findFirst({
+        where: {
+          organizationId: context.organizationId,
+          goalType: "cash_collected",
+          startDate: { lte: period.end },
+          endDate: { gte: period.start },
+          status: "active"
+        },
+        orderBy: [{ primary: "desc" }, { updatedAt: "desc" }]
+      }),
+      prisma.payment.findMany({
+        where: {
+          organizationId: context.organizationId,
+          status: "succeeded",
+          paymentDate: { gte: period.start, lte: period.end }
+        }
+      })
+    ]);
+    const overdue = invoices
+      .filter((invoice) => invoice.dueDate < new Date() && invoice.amountOutstandingCents > 0)
+      .reduce((total, invoice) => total + invoice.amountOutstandingCents, 0);
+    const expected = invoices.reduce((total, invoice) => total + invoice.amountOutstandingCents, 0);
+    const collected = payments.reduce((total, payment) => total + payment.amountCents, 0);
+    const gap = goal ? Math.max(0, goal.targetAmountCents - collected) : 0;
+    await prisma.operatingNote.create({
+      data: {
+        organizationId: context.organizationId,
+        userId: context.userId,
+        category: "revenue",
+        body:
+          command.type === "show_overdue"
+            ? `Revenue command result: ${formatMoney(overdue)} is overdue.`
+            : command.type === "show_expected"
+              ? `Revenue command result: ${formatMoney(expected)} is expected from open invoices.`
+              : `Revenue command result: ${formatMoney(gap)} remains to the monthly cash goal.`
+      }
+    });
+    return;
+  }
+
+  await prisma.operatingNote.create({
+    data: {
+      organizationId: context.organizationId,
+      userId: context.userId,
+      category: "revenue",
+      body: "Revenue command needs confirmation before writing financial records. Open Revenue Command Center to review and submit the form."
+    }
+  });
 }
 
 async function nextSortOrder(userId: string, organizationId: string, timeframe: string) {

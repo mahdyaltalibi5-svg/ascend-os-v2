@@ -36,29 +36,31 @@ enum FocusBlockStatus {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
-  name                    String?
-  email                   String                   @unique
-  normalizedEmail         String                   @unique
-  emailVerified           DateTime?
-  image                   String?
-  passwordHash            String
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  accounts                Account[]
-  sessions                Session[]
-  userSessions            UserSession[]
-  memberships             OrganizationMembership[]
-  notificationPreferences NotificationPreference[]
-  auditEvents             AuditEvent[]             @relation("AuditActor")
-  createdOrganizations    Organization[]           @relation("OrganizationCreator")
-  sentInvitations         Invitation[]             @relation("InvitationSender")
-  personalPriorities      PersonalPriority[]
-  operatingNotes          OperatingNote[]
-  focusBlocks             FocusBlock[]
-  dailyPlans              DailyPlan[]
-  goals                   Goal[]
-  inAppNotifications      InAppNotification[]
+  id                        String                   @id @default(cuid())
+  name                      String?
+  email                     String                   @unique
+  normalizedEmail           String                   @unique
+  emailVerified             DateTime?
+  image                     String?
+  passwordHash              String
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  accounts                  Account[]
+  sessions                  Session[]
+  userSessions              UserSession[]
+  memberships               OrganizationMembership[]
+  notificationPreferences   NotificationPreference[]
+  auditEvents               AuditEvent[]             @relation("AuditActor")
+  createdOrganizations      Organization[]           @relation("OrganizationCreator")
+  sentInvitations           Invitation[]             @relation("InvitationSender")
+  personalPriorities        PersonalPriority[]
+  operatingNotes            OperatingNote[]
+  focusBlocks               FocusBlock[]
+  dailyPlans                DailyPlan[]
+  goals                     Goal[]
+  inAppNotifications        InAppNotification[]
+  revenueGoals              RevenueGoal[]
+  createdRevenueAdjustments RevenueAdjustment[]      @relation("RevenueAdjustmentCreator")
 }
 
 model Account {
@@ -88,15 +90,15 @@ model Session {
 }
 
 model UserSession {
-  id             String   @id @default(cuid())
-  userId         String
-  sessionToken   String   @unique
-  lastSeenAt     DateTime @default(now())
-  expiresAt      DateTime
-  ipHash         String?
-  userAgent      String?
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  lastSeenAt   DateTime @default(now())
+  expiresAt    DateTime
+  ipHash       String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -108,27 +110,36 @@ model VerificationToken {
 }
 
 model Organization {
-  id                      String                   @id @default(cuid())
-  name                    String
-  slug                    String                   @unique
-  website                 String?
-  timezone                String
-  createdById             String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  createdBy               User?                    @relation("OrganizationCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  memberships             OrganizationMembership[]
-  roles                   Role[]
-  invitations             Invitation[]
-  auditEvents             AuditEvent[]
-  notificationPreferences NotificationPreference[]
-  branding                OrganizationBranding?
-  personalPriorities      PersonalPriority[]
-  operatingNotes          OperatingNote[]
-  focusBlocks             FocusBlock[]
-  dailyPlans              DailyPlan[]
-  goals                   Goal[]
-  inAppNotifications      InAppNotification[]
+  id                        String                     @id @default(cuid())
+  name                      String
+  slug                      String                     @unique
+  website                   String?
+  timezone                  String
+  createdById               String?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  createdBy                 User?                      @relation("OrganizationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  memberships               OrganizationMembership[]
+  roles                     Role[]
+  invitations               Invitation[]
+  auditEvents               AuditEvent[]
+  notificationPreferences   NotificationPreference[]
+  branding                  OrganizationBranding?
+  personalPriorities        PersonalPriority[]
+  operatingNotes            OperatingNote[]
+  focusBlocks               FocusBlock[]
+  dailyPlans                DailyPlan[]
+  goals                     Goal[]
+  inAppNotifications        InAppNotification[]
+  clients                   Client[]
+  serviceOfferings          ServiceOffering[]
+  revenueContracts          RevenueContract[]
+  invoices                  Invoice[]
+  payments                  Payment[]
+  recurringRevenueSchedules RecurringRevenueSchedule[]
+  revenueGoals              RevenueGoal[]
+  revenueForecastSnapshots  RevenueForecastSnapshot[]
+  revenueAdjustments        RevenueAdjustment[]
 }
 
 model OrganizationMembership {
@@ -268,32 +279,32 @@ model OrganizationBranding {
 }
 
 model PersonalPriority {
-  id             String             @id @default(cuid())
-  organizationId String
-  userId         String
-  title          String
-  notes          String?
-  description    String?
-  status         PersonalItemStatus @default(OPEN)
-  urgency        String             @default("normal")
-  priorityLevel  String             @default("medium")
-  category       String             @default("other")
-  timeframe      String             @default("today")
-  dueDate        DateTime?
-  dueTime        String?
-  estimatedMinutes Int?
-  estimatedRevenueImpact Decimal?   @db.Decimal(12, 2)
-  sortOrder      Int                @default(0)
-  pinned         Boolean            @default(false)
-  carryoverCount Int                @default(0)
-  completedAt    DateTime?
-  archivedAt     DateTime?
-  deletedAt      DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  focusBlocks    FocusBlock[]
+  id                     String             @id @default(cuid())
+  organizationId         String
+  userId                 String
+  title                  String
+  notes                  String?
+  description            String?
+  status                 PersonalItemStatus @default(OPEN)
+  urgency                String             @default("normal")
+  priorityLevel          String             @default("medium")
+  category               String             @default("other")
+  timeframe              String             @default("today")
+  dueDate                DateTime?
+  dueTime                String?
+  estimatedMinutes       Int?
+  estimatedRevenueImpact Decimal?           @db.Decimal(12, 2)
+  sortOrder              Int                @default(0)
+  pinned                 Boolean            @default(false)
+  carryoverCount         Int                @default(0)
+  completedAt            DateTime?
+  archivedAt             DateTime?
+  deletedAt              DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  organization           Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  focusBlocks            FocusBlock[]
 
   @@index([organizationId, userId, status, timeframe, sortOrder])
   @@index([organizationId, userId, dueDate])
@@ -302,20 +313,20 @@ model PersonalPriority {
 }
 
 model OperatingNote {
-  id             String       @id @default(cuid())
-  organizationId String
-  userId         String
-  title          String?
-  body           String
-  pinned         Boolean      @default(false)
-  category       String       @default("idea")
-  tags           String[]     @default([])
-  archivedAt     DateTime?
+  id                  String       @id @default(cuid())
+  organizationId      String
+  userId              String
+  title               String?
+  body                String
+  pinned              Boolean      @default(false)
+  category            String       @default("idea")
+  tags                String[]     @default([])
+  archivedAt          DateTime?
   convertedPriorityId String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, userId, pinned, archivedAt, createdAt])
   @@index([organizationId, userId, category])
@@ -323,31 +334,31 @@ model OperatingNote {
 }
 
 model FocusBlock {
-  id             String           @id @default(cuid())
-  organizationId String
-  userId         String
-  priorityId     String?
-  title          String
-  windowLabel    String
-  intention      String?
-  status         FocusBlockStatus @default(PLANNED)
-  startsAt       DateTime?
-  endsAt         DateTime?
-  plannedMinutes Int?
-  actualStartAt  DateTime?
-  actualEndAt    DateTime?
-  actualFocusedMinutes Int       @default(0)
-  pausedAt       DateTime?
-  interruptionCount Int          @default(0)
-  completionNote String?
-  calendarEventId String?
-  archivedAt     DateTime?
-  sortOrder      Int             @default(0)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  priority       PersonalPriority? @relation(fields: [priorityId], references: [id], onDelete: SetNull)
+  id                   String            @id @default(cuid())
+  organizationId       String
+  userId               String
+  priorityId           String?
+  title                String
+  windowLabel          String
+  intention            String?
+  status               FocusBlockStatus  @default(PLANNED)
+  startsAt             DateTime?
+  endsAt               DateTime?
+  plannedMinutes       Int?
+  actualStartAt        DateTime?
+  actualEndAt          DateTime?
+  actualFocusedMinutes Int               @default(0)
+  pausedAt             DateTime?
+  interruptionCount    Int               @default(0)
+  completionNote       String?
+  calendarEventId      String?
+  archivedAt           DateTime?
+  sortOrder            Int               @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  organization         Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  priority             PersonalPriority? @relation(fields: [priorityId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, userId, status, startsAt])
   @@index([organizationId, userId, startsAt])
@@ -357,31 +368,31 @@ model FocusBlock {
 }
 
 model DailyPlan {
-  id                String   @id @default(cuid())
-  organizationId    String
-  userId            String
-  dateKey           String
-  timezone          String
-  dailyIntention    String?
-  topOutcome1       String?
-  topOutcome2       String?
-  topOutcome3       String?
-  mainRisk          String?
-  status            String   @default("STARTED")
-  startedAt         DateTime?
-  endedAt           DateTime?
-  completionSummary String?
-  progressMade      String?
-  timeWasted        String?
-  blockedBy         String?
-  carryForward      String?
-  removeTomorrow    String?
+  id                  String       @id @default(cuid())
+  organizationId      String
+  userId              String
+  dateKey             String
+  timezone            String
+  dailyIntention      String?
+  topOutcome1         String?
+  topOutcome2         String?
+  topOutcome3         String?
+  mainRisk            String?
+  status              String       @default("STARTED")
+  startedAt           DateTime?
+  endedAt             DateTime?
+  completionSummary   String?
+  progressMade        String?
+  timeWasted          String?
+  blockedBy           String?
+  carryForward        String?
+  removeTomorrow      String?
   tomorrowFirstAction String?
-  founderRating     Int?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  founderRating       Int?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId, dateKey])
   @@index([organizationId, userId, status])
@@ -389,27 +400,27 @@ model DailyPlan {
 }
 
 model Goal {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   userId         String
   title          String
   description    String?
   goalType       String
-  category       String   @default("other")
-  metricType     String   @default("count")
-  targetValue    Decimal  @default(1) @db.Decimal(14, 2)
-  currentValue   Decimal  @default(0) @db.Decimal(14, 2)
+  category       String       @default("other")
+  metricType     String       @default("count")
+  targetValue    Decimal      @default(1) @db.Decimal(14, 2)
+  currentValue   Decimal      @default(0) @db.Decimal(14, 2)
   startDate      DateTime
   endDate        DateTime
-  status         String   @default("active")
-  unit           String   @default("count")
+  status         String       @default("active")
+  unit           String       @default("count")
   ownerId        String?
   archivedAt     DateTime?
   completedAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, userId, goalType, status])
   @@index([organizationId, userId, startDate, endDate])
@@ -417,7 +428,7 @@ model Goal {
 }
 
 model InAppNotification {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   userId         String
   type           String
@@ -427,10 +438,276 @@ model InAppNotification {
   entityId       String?
   readAt         DateTime?
   dismissedAt    DateTime?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, userId, readAt, createdAt])
   @@index([organizationId, userId, type])
+}
+
+model RevenueGoal {
+  id                String       @id @default(cuid())
+  organizationId    String
+  ownerUserId       String?
+  name              String
+  goalPeriod        String
+  goalType          String
+  startDate         DateTime
+  endDate           DateTime
+  targetAmountCents Int
+  status            String       @default("active")
+  primary           Boolean      @default(false)
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner             User?        @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, goalType, startDate, endDate])
+  @@index([organizationId, status, primary])
+  @@index([ownerUserId])
+}
+
+model Client {
+  id                 String                     @id @default(cuid())
+  organizationId     String
+  businessName       String
+  contactName        String?
+  contactEmail       String?
+  contactPhone       String?
+  status             String                     @default("prospect")
+  source             String?
+  notes              String?
+  externalProvider   String?
+  externalId         String?
+  lastSyncedAt       DateTime?
+  syncStatus         String?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  archivedAt         DateTime?
+  organization       Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contracts          RevenueContract[]
+  invoices           Invoice[]
+  payments           Payment[]
+  recurringSchedules RecurringRevenueSchedule[]
+  adjustments        RevenueAdjustment[]
+
+  @@index([organizationId, businessName])
+  @@index([organizationId, status])
+  @@index([organizationId, archivedAt])
+  @@index([organizationId, externalProvider, externalId])
+}
+
+model ServiceOffering {
+  id                String            @id @default(cuid())
+  organizationId    String
+  name              String
+  description       String?
+  revenueCategory   String            @default("other")
+  defaultPriceCents Int?
+  billingType       String            @default("one_time")
+  active            Boolean           @default(true)
+  externalProvider  String?
+  externalId        String?
+  lastSyncedAt      DateTime?
+  syncStatus        String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contracts         RevenueContract[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, active])
+  @@index([organizationId, revenueCategory])
+  @@index([organizationId, externalProvider, externalId])
+}
+
+model RevenueContract {
+  id                    String                     @id @default(cuid())
+  organizationId        String
+  clientId              String
+  serviceOfferingId     String?
+  name                  String
+  contractedAmountCents Int
+  billingType           String
+  startDate             DateTime?
+  endDate               DateTime?
+  status                String                     @default("draft")
+  expectedCloseDate     DateTime?
+  signedDate            DateTime?
+  cancellationDate      DateTime?
+  mrrAmountCents        Int?
+  depositAmountCents    Int?
+  notes                 String?
+  externalProvider      String?
+  externalId            String?
+  lastSyncedAt          DateTime?
+  syncStatus            String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  archivedAt            DateTime?
+  organization          Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client                Client                     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  serviceOffering       ServiceOffering?           @relation(fields: [serviceOfferingId], references: [id], onDelete: SetNull)
+  invoices              Invoice[]
+  payments              Payment[]
+  recurringSchedules    RecurringRevenueSchedule[]
+  adjustments           RevenueAdjustment[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, serviceOfferingId])
+  @@index([organizationId, signedDate])
+  @@index([organizationId, startDate, endDate])
+  @@index([organizationId, archivedAt])
+  @@index([organizationId, externalProvider, externalId])
+}
+
+model Invoice {
+  id                     String              @id @default(cuid())
+  organizationId         String
+  clientId               String
+  revenueContractId      String?
+  externalProvider       String?
+  externalInvoiceId      String?
+  invoiceNumber          String?
+  issueDate              DateTime
+  dueDate                DateTime
+  totalAmountCents       Int
+  amountPaidCents        Int                 @default(0)
+  amountOutstandingCents Int
+  status                 String              @default("open")
+  currency               String              @default("USD")
+  notes                  String?
+  lastSyncedAt           DateTime?
+  syncStatus             String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  paidAt                 DateTime?
+  archivedAt             DateTime?
+  organization           Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client                 Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  contract               RevenueContract?    @relation(fields: [revenueContractId], references: [id], onDelete: SetNull)
+  payments               Payment[]
+  adjustments            RevenueAdjustment[]
+
+  @@index([organizationId, dueDate])
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, revenueContractId])
+  @@index([organizationId, archivedAt])
+  @@index([organizationId, externalProvider, externalInvoiceId])
+}
+
+model Payment {
+  id                  String              @id @default(cuid())
+  organizationId      String
+  clientId            String
+  invoiceId           String?
+  revenueContractId   String?
+  paymentDate         DateTime
+  amountCents         Int
+  paymentMethod       String?
+  status              String              @default("succeeded")
+  externalProvider    String?
+  externalPaymentId   String?
+  idempotencyKey      String?
+  isRefunded          Boolean             @default(false)
+  refundedAmountCents Int                 @default(0)
+  notes               String?
+  lastSyncedAt        DateTime?
+  syncStatus          String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client              Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  invoice             Invoice?            @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  contract            RevenueContract?    @relation(fields: [revenueContractId], references: [id], onDelete: SetNull)
+  adjustments         RevenueAdjustment[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, paymentDate])
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, invoiceId])
+  @@index([organizationId, revenueContractId])
+  @@index([organizationId, externalProvider, externalPaymentId])
+}
+
+model RecurringRevenueSchedule {
+  id                String          @id @default(cuid())
+  organizationId    String
+  clientId          String
+  revenueContractId String
+  amountCents       Int
+  frequency         String
+  startDate         DateTime
+  endDate           DateTime?
+  nextExpectedDate  DateTime
+  status            String          @default("active")
+  externalProvider  String?
+  externalId        String?
+  lastSyncedAt      DateTime?
+  syncStatus        String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client            Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  contract          RevenueContract @relation(fields: [revenueContractId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, nextExpectedDate])
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, revenueContractId])
+  @@index([organizationId, externalProvider, externalId])
+}
+
+model RevenueForecastSnapshot {
+  id                      String       @id @default(cuid())
+  organizationId          String
+  forecastDate            DateTime     @default(now())
+  periodStart             DateTime
+  periodEnd               DateTime
+  worstCaseAmountCents    Int
+  expectedAmountCents     Int
+  bestCaseAmountCents     Int
+  contractedAmountCents   Int
+  expectedCashAmountCents Int
+  overdueAmountCents      Int
+  mrrCents                Int
+  assumptions             Json
+  createdAt               DateTime     @default(now())
+  organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, forecastDate])
+  @@index([organizationId, periodStart, periodEnd])
+}
+
+model RevenueAdjustment {
+  id                String           @id @default(cuid())
+  organizationId    String
+  clientId          String?
+  invoiceId         String?
+  paymentId         String?
+  revenueContractId String?
+  adjustmentType    String
+  amountCents       Int
+  reason            String
+  effectiveDate     DateTime
+  createdById       String?
+  createdAt         DateTime         @default(now())
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client            Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  invoice           Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  payment           Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  contract          RevenueContract? @relation(fields: [revenueContractId], references: [id], onDelete: SetNull)
+  createdBy         User?            @relation("RevenueAdjustmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, effectiveDate])
+  @@index([organizationId, adjustmentType])
+  @@index([organizationId, clientId])
+  @@index([organizationId, invoiceId])
+  @@index([organizationId, paymentId])
+  @@index([organizationId, revenueContractId])
 }

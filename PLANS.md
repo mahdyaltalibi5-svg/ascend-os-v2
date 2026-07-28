@@ -1,5 +1,66 @@
 # Ascend OS Milestone 1 Plan
 
+## Milestone 2 Revenue Command Center
+
+### Current repository state inspected
+
+- Branch is `main` and the working tree was clean before this pass.
+- Production is currently served from the existing Vercel project at `https://ascend-os-v2-app.vercel.app`.
+- Personal OS models are already organization- and user-scoped: `PersonalPriority`, `OperatingNote`, `FocusBlock`, `DailyPlan`, `Goal`, and `InAppNotification`.
+- The current `Goal` model is a general Personal OS/operating goal model and should not be overloaded with financial ledger behavior.
+- Navigation still points Revenue to `/app/module/revenue`, which is an honest empty extension point from Milestone 1.
+- Existing permissions include `revenue.view`, `clients.view`, and broad goals permissions, but Milestone 2 requires finer financial permissions.
+
+### Conflicts with the Milestone 2 prompt
+
+- There are no revenue ledger models yet: clients, service offerings, contracts, invoices, payments, recurring schedules, forecasts, and adjustments are missing.
+- No manual revenue workflows exist.
+- Revenue calculations, forecasts, recommendations, CSV export, and revenue notifications do not exist.
+- The Founder command center does not yet summarize real revenue status.
+- Salesperson permission restrictions need to explicitly deny broad financial access.
+
+### Assumptions
+
+- A dedicated `RevenueGoal` model is cleaner than reusing `Goal` because financial goals need period uniqueness, immutable reporting behavior, goal type semantics, and audit-friendly money handling.
+- Stored money will use integer minor units (`amountCents`) to avoid floating-point financial errors.
+- Manual workflows ship first; Stripe remains an honest future integration with provider/external-id fields ready.
+- CSV import is deferred for this pass if it would destabilize the core revenue workflows; CSV export is in scope.
+- Revenue recommendations remain deterministic and are labeled honestly as Ascend revenue recommendations.
+
+### Implementation sequence
+
+1. [x] Add additive Prisma models, indexes, and migration for the revenue ledger.
+2. [x] Expand permissions and seed/default organization setup for service offerings.
+3. [x] Add revenue validation, money/date utilities, calculations, forecasting, recommendations, notifications, CSV export, and deterministic command parsing.
+4. [x] Add server-side revenue actions with active-organization, membership, permission, and ownership checks.
+5. [x] Build `/app/revenue` with goal setup, scorecards, forecast, timeline, composition, attention queue, activity feed, CSV export, and manual forms.
+6. [x] Add compact Founder dashboard revenue summary and one-click Personal OS priority creation from revenue recommendations.
+7. [x] Add unit and integration tests, plus a Playwright revenue workflow test that uses non-production database configuration.
+8. [x] Update documentation including `REVENUE_SYSTEM.md`.
+9. [x] Run validation, deploy production migration, deploy to Vercel, smoke test production, commit, and push.
+
+### Decisions made during implementation
+
+- Revenue goals use a dedicated `RevenueGoal` model rather than the generic Personal OS `Goal` model.
+- Financial amounts are stored as integer cents instead of decimal or floating-point values.
+- Manual revenue tracking is complete before Stripe; provider fields and sync metadata prepare future integration boundaries.
+- CSV export shipped; CSV import is deferred to avoid destabilizing the core revenue workflow.
+- Revenue notifications follow the current Personal OS pattern of deterministic generated notifications plus persisted action/audit history.
+
+### Verification results
+
+- `pnpm install --config.confirm-modules-purge=false`: passed after network access was allowed.
+- `pnpm exec prisma generate`: passed.
+- `pnpm run format:check`: passed.
+- `pnpm run lint`: passed.
+- `pnpm run typecheck`: passed.
+- `pnpm run test`: passed; revenue DB integration skipped because `TEST_DATABASE_URL` is not configured locally.
+- `pnpm run build`: passed.
+- `pnpm run test:e2e`: failed locally because the local app database at `localhost:5432` is not connected; production browser smoke covered the deployed revenue workflow.
+- Production migration `20260728033000_revenue_command_center`: applied successfully with `prisma migrate deploy`.
+- Vercel production deployment succeeded and `https://ascend-os-v2-app.vercel.app` was aliased to the latest deployment.
+- Production smoke passed for sign-in, Revenue open, goal, client, contract, invoice, partial payment, final payment, recurring revenue, forecast snapshot, priority creation, refresh persistence, mobile render, sign-out/sign-in persistence, health, and clean recent logs.
+
 ## Milestone 1.1 runtime repair diagnosis
 
 ### Current repository state inspected

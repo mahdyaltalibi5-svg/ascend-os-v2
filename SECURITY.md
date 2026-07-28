@@ -1,5 +1,13 @@
 # Security
 
+## Revenue Data
+
+Revenue records are sensitive organization-owned data. Server reads and mutations must never trust an organization ID supplied by the browser. The active organization is resolved from the signed-in session and validated membership before accessing clients, services, contracts, invoices, payments, recurring schedules, goals, forecasts, or adjustments.
+
+Financial mutations validate amount, currency, date, status, and linked-record ownership. Payment recording uses a transaction when updating invoice totals and rejects accidental overpayment without an explicit adjustment workflow. Refunds and write-offs should be represented through `RevenueAdjustment` records instead of silent historical rewrites.
+
+Salesperson does not receive broad revenue permissions by default and should not see cash totals, MRR, invoice totals, forecasts, refunds, or revenue goals.
+
 ## Threat Assumptions
 
 Users may belong to multiple organizations. A user may attempt to access another tenant's data by changing route params, cookies, or request bodies.

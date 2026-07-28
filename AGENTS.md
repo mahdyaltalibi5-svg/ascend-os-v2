@@ -3,6 +3,7 @@
 - Read the relevant documentation before editing.
 - Preserve organization scoping.
 - Preserve Personal OS user scoping; personal priorities, notes, focus blocks, goals, daily plans, and notifications must be constrained by both `organizationId` and `userId`.
+- Preserve revenue integrity; store money as integer cents, validate linked records by active organization, and prefer adjustments over silent financial rewrites.
 - Never bypass server-side permission checks.
 - Never invent functional integrations.
 - Never label deterministic recommendations as external AI output.

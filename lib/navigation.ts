@@ -38,10 +38,10 @@ export const appNavigation: NavItem[] = [
   },
   {
     label: "Revenue",
-    href: "/app/module/revenue",
+    href: "/app/revenue",
     icon: BadgeDollarSign,
-    permissions: ["revenue.view", "goals.view"],
-    description: "Revenue goals and financial surfaces arrive in later milestones."
+    permissions: ["revenue.view"],
+    description: "Real revenue goals, invoices, payments, forecasts, and attention queues."
   },
   {
     label: "Clients",
