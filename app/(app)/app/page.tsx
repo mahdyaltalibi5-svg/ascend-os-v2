@@ -3,18 +3,13 @@ import {
   Activity,
   CalendarCheck2,
   CheckCircle2,
-  CircleDollarSign,
   ClipboardList,
   Headphones,
-  LineChart,
   LockKeyhole,
-  RadioTower,
-  TrendingUp,
   UsersRound
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PersonalCommandCenter } from "@/components/app/personal-command-center";
 import { getCurrentSession } from "@/lib/server/auth";
@@ -28,7 +23,8 @@ export default async function AppDashboardPage() {
   const context = await requireOrganizationContext(session.user.id);
   const personalCommandData = await getPersonalCommandData({
     userId: session.user.id,
-    organizationId: context.organization.id
+    organizationId: context.organization.id,
+    timezone: context.organization.timezone
   });
   const founderLike =
     context.permissions.includes("revenue.view") || context.permissions.includes("audit.view");
@@ -47,133 +43,9 @@ function FounderDashboard({
   data: Awaited<ReturnType<typeof getPersonalCommandData>>;
   organizationName: string;
 }) {
-  const tiles: Array<[string, string, LucideIcon]> = [
-    ["Revenue goal", "Revenue goals will be configured in Milestone 2.", CircleDollarSign],
-    ["Cash collected", "Connect Stripe to display cash collected.", TrendingUp],
-    ["MRR", "Subscription revenue will appear after billing is connected.", LineChart],
-    ["Calls today", "Sales activity will appear after the sales workspace is enabled.", Headphones],
-    ["Meetings booked", "Calendar and sales tracking arrive in a later milestone.", CalendarCheck2],
-    [
-      "Meetings held",
-      "Meeting outcomes will appear after sales workflows are enabled.",
-      UsersRound
-    ],
-    [
-      "Deals closed",
-      "Closed revenue will appear after the CRM and Stripe modules exist.",
-      CheckCircle2
-    ],
-    ["Churn", "Churn tracking will be configured after client lifecycle data exists.", Activity]
-  ];
-
   return (
     <section className="reveal-up grid gap-6">
-      <PageHeader
-        title="Founder Command Center"
-        description={`${organizationName} now has a real personal command layer. Capture priorities, notes, and focus blocks while revenue and integration modules stay honest until connected.`}
-        eyebrow="Ascend OS"
-        mode="Personal OS"
-      />
-      <PersonalCommandCenter data={data} />
-      <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="scan-line min-h-72 p-0">
-          <div className="grid h-full gap-6 p-5 md:grid-cols-[0.9fr_1.1fr]">
-            <div className="flex flex-col justify-between gap-8">
-              <div>
-                <p className="text-sm font-semibold text-primary">Agency command layer</p>
-                <h2 className="mt-3 text-2xl font-semibold tracking-normal text-foreground">
-                  Personal OS is online. Integrations wait for real sources.
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  The command center is scoped to {organizationName}, with your priorities and notes
-                  separated from deferred Stripe, dialer, client, and agent data.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {["Tenant scoped", "Founder access", "Audit aware"].map((item) => (
-                  <span
-                    className="rounded-sm border border-border bg-background/45 px-2.5 py-1 text-xs font-medium text-muted"
-                    key={item}
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="grid content-end gap-3">
-              {["Stripe", "Sales workspace", "Client lifecycle"].map((source, index) => (
-                <div className="rounded-md border border-border bg-background/35 p-3" key={source}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-foreground">{source}</p>
-                    <span className="text-xs text-muted-soft">Deferred</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
-                    <div
-                      className="h-full rounded-full bg-primary/70"
-                      style={{ width: `${28 + index * 17}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-        <Card className="min-h-72">
-          <CardHeader>
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-primary/35 bg-primary/15 text-primary">
-              <RadioTower aria-hidden className="h-5 w-5" />
-            </div>
-            <CardTitle>Control posture</CardTitle>
-            <CardDescription>
-              Founder-only financial and administrative surfaces are visible here because this role
-              has the required permissions.
-            </CardDescription>
-          </CardHeader>
-          <div className="grid gap-2 text-sm text-muted">
-            {["Organization verified", "Permission set loaded", "Future modules locked"].map(
-              (item) => (
-                <div
-                  className="flex items-center gap-2 rounded-md border border-border bg-background/35 px-3 py-2"
-                  key={item}
-                >
-                  <CheckCircle2 aria-hidden className="h-4 w-4 text-success" />
-                  {item}
-                </div>
-              )
-            )}
-          </div>
-        </Card>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {tiles.map(([title, description, Icon]) => (
-          <MetricShell key={title} title={title} description={description} icon={Icon} />
-        ))}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <EmptyState
-          title="Today's priorities"
-          description="Use Personal Command above for real priorities. Team-wide priority automation can arrive later."
-        />
-        <EmptyState
-          title="Founder brief"
-          description="Agent-authored briefs arrive after agent orchestration is built."
-        />
-        <EmptyState
-          title="Approval inbox"
-          description="Approvals will appear when workflows create reviewable actions."
-        />
-      </div>
-      <Card>
-        <CardHeader>
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border-strong bg-surface-elevated text-primary">
-            <ClipboardList aria-hidden className="h-5 w-5" />
-          </div>
-          <CardTitle>Recent activity</CardTitle>
-          <CardDescription>
-            Audit-backed organization events are available in Settings for users with audit access.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <PersonalCommandCenter data={data} organizationName={organizationName} />
     </section>
   );
 }
@@ -223,7 +95,7 @@ function SalespersonDashboard({
         eyebrow="Ascend OS"
         mode="Personal OS"
       />
-      <PersonalCommandCenter data={data} />
+      <PersonalCommandCenter data={data} organizationName={organizationName} />
       <Card className="scan-line">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>
