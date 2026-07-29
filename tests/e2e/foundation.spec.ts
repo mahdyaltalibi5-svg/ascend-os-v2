@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("primary foundation happy path", async ({ page }) => {
+test("primary foundation happy path", async ({ browser, page }) => {
   test.setTimeout(90_000);
 
   const unique = Date.now();
@@ -32,14 +32,20 @@ test("primary foundation happy path", async ({ page }) => {
   await page.waitForURL(/\/signin/);
   await expect(page.getByRole("heading", { name: "Sign in to Ascend OS" })).toBeVisible();
 
-  await page.context().clearCookies();
-  await page.goto("/signin");
-  await page.getByLabel("Email").fill("sales@ascend.local");
-  await page.getByLabel("Password").fill("AscendDev123!");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  const salesContext = await browser.newContext();
+  const salesPage = await salesContext.newPage();
 
-  await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
-  await expect(page.locator("body")).toContainText("Sales Command Center", { timeout: 30000 });
-  await expect(page.getByRole("link", { name: /Revenue/ })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Settings/ })).toHaveCount(0);
+  await salesPage.goto("/signin");
+  await salesPage.getByLabel("Email").fill("sales@ascend.local");
+  await salesPage.getByLabel("Password").fill("AscendDev123!");
+  await salesPage.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(salesPage).toHaveURL(/\/app$/, { timeout: 20000 });
+  await expect(salesPage.locator("body")).toContainText("Sales Command Center", {
+    timeout: 30000
+  });
+  await expect(salesPage.getByRole("link", { name: /Revenue/ })).toHaveCount(0);
+  await expect(salesPage.getByRole("link", { name: /Settings/ })).toHaveCount(0);
+
+  await salesContext.close();
 });
