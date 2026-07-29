@@ -51,6 +51,13 @@ export function SignupForm() {
     });
 
     if (signInResult?.ok) {
+      const sessionReady = await waitForCredentialSession();
+      if (!sessionReady) {
+        setMessage("Account created. Please sign in to continue.");
+        router.push("/signin");
+        return;
+      }
+
       window.location.assign("/app/onboarding");
       return;
     }
@@ -90,4 +97,20 @@ export function SignupForm() {
       </p>
     </form>
   );
+}
+
+async function waitForCredentialSession() {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const session = (await fetch("/api/auth/session", {
+      cache: "no-store",
+      credentials: "same-origin"
+    })
+      .then((response) => response.json())
+      .catch(() => null)) as { user?: unknown } | null;
+
+    if (session?.user) return true;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+
+  return false;
 }
