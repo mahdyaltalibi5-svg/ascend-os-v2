@@ -79,7 +79,9 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await page.getByRole("button", { name: "Add priority" }).first().click();
 
   await page.reload();
-  await expect(page.getByText(clientName)).toBeVisible();
+  await expect(
+    page.getByRole("paragraph").filter({ hasText: exactText(clientName) })
+  ).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("heading", { name: "Financial operating center" })).toBeVisible();
@@ -107,4 +109,8 @@ async function openWorkflow(page: Page, title: string) {
   }
 
   return workflow;
+}
+
+function exactText(value: string) {
+  return new RegExp(`^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 }
