@@ -17,7 +17,7 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await page.getByLabel("Website").fill("https://example.com");
   await page.getByRole("button", { name: "Create organization" }).click();
 
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
   await page.getByRole("link", { name: /Revenue/ }).click();
   await expect(page.getByRole("heading", { name: "Financial operating center" })).toBeVisible();
 

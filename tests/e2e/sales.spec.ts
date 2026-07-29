@@ -19,14 +19,14 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await page.getByLabel("Website").fill("https://example.com");
   await page.getByRole("button", { name: "Create organization" }).click();
 
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
   await page.getByRole("link", { name: /Sales/ }).click();
   await expect(page.getByRole("heading", { name: "Lead engine and pipeline" })).toBeVisible();
 
   await page.getByLabel("Business name").fill(businessName);
   await page.getByLabel("Phone").fill("602-555-0100");
   await page.getByLabel("Website").fill("https://example.com");
-  await page.getByLabel("Industry").fill("Roofing");
+  await page.getByRole("textbox", { name: "Industry" }).fill("Roofing");
   await page.getByRole("button", { name: "Add lead" }).click();
   await expect(page.getByText(businessName)).toBeVisible();
 

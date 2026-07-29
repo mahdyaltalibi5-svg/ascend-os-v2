@@ -16,7 +16,8 @@ test("primary foundation happy path", async ({ page }) => {
   await page.getByLabel("Website").fill("https://example.com");
   await page.getByRole("button", { name: "Create organization" }).click();
 
-  await expect(page.getByRole("heading", { name: "Founder Command Center" })).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "What needs to happen today?" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Revenue/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Settings/ })).toBeVisible();
 

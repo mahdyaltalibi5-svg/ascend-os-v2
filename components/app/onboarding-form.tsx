@@ -57,8 +57,8 @@ export function OnboardingForm() {
       return;
     }
 
-    router.push("/app");
     router.refresh();
+    window.location.assign("/app");
   }
 
   return (
