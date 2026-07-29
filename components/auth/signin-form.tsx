@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,6 @@ import { signInSchema } from "@/lib/validation/auth";
 type FormValues = z.infer<typeof signInSchema>;
 
 export function SigninForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -52,8 +51,7 @@ export function SigninForm() {
     });
 
     if (result?.ok) {
-      router.push(result.url ?? "/app");
-      router.refresh();
+      window.location.assign(result.url ?? "/app");
       return;
     }
 
