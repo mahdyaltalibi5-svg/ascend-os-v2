@@ -31,20 +31,20 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await expect(page.getByText(businessName)).toBeVisible();
 
   await page.getByRole("button", { name: "Convert" }).first().click();
-  await page.getByRole("link", { name: "Queue" }).click();
+  await page.getByRole("link", { name: "Queue", exact: true }).click();
   await expect(page.getByText(businessName)).toBeVisible();
   await page.getByLabel("Outcome").selectOption("interested");
   await page.getByLabel("Duration seconds").fill("180");
   await page.getByRole("button", { name: "Save disposition" }).click();
 
-  await page.getByRole("link", { name: "Appointments" }).click();
+  await page.getByRole("link", { name: "Appointments", exact: true }).click();
   await page.getByLabel("Title").fill("Sales call");
   await page.getByLabel("Start").fill("2026-08-01T10:00");
   await page.getByLabel("End").fill("2026-08-01T11:00");
   await page.getByRole("button", { name: "Book appointment" }).click();
   await expect(page.getByText("Sales call")).toBeVisible();
 
-  await page.getByRole("link", { name: "Pipeline" }).click();
+  await page.getByRole("link", { name: "Pipeline", exact: true }).click();
   await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
   await page.reload();
   await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
