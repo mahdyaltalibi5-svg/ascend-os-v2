@@ -31,10 +31,10 @@ export const appNavigation: NavItem[] = [
   },
   {
     label: "Sales",
-    href: "/app/module/sales",
+    href: "/app/sales",
     icon: Target,
-    permissions: ["leads.view", "calls.view_own", "pipeline.view_own"],
-    description: "Lead, call, and pipeline surfaces arrive in later milestones."
+    permissions: ["leads.view", "prospects.view_own", "prospects.view_all", "pipeline.view_own"],
+    description: "Lead engine, sales queue, appointments, and pipeline."
   },
   {
     label: "Revenue",

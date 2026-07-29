@@ -35,3 +35,7 @@ Personal OS tables should usually include both `organizationId` and `userId` so 
 Daily plans must remain unique on `(organizationId, userId, dateKey)`. Focus blocks should keep timestamp and `calendarEventId` fields populated correctly so future calendar sync does not need a redesign.
 
 Revenue tables use integer cents for stored money. Future financial tables must keep `organizationId`, avoid hard deletes, validate linked records by organization, and prefer adjustment records over silent historical rewrites.
+
+Milestone 3 sales tables add `LeadCampaign`, `LeadBusiness`, `LeadContact`, `LeadCampaignMembership`, `LeadAnalysis`, `Prospect`, `OutreachAttempt`, `FollowUp`, `Appointment`, `Pipeline`, `PipelineStage`, `Opportunity`, `SalesGoal`, `ContactSuppression`, and `BackgroundJob`. These are all organization-scoped. Prospects, follow-ups, appointments, and opportunities also preserve user assignment IDs for own-vs-all permissions.
+
+Lead deduplication uses Google Place ID, normalized phone, normalized domain, and normalized business name plus address. Won opportunity handoff links Revenue with Sales through `RevenueContract.sourceOpportunityId`.

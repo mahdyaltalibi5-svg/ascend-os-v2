@@ -20,6 +20,12 @@ Milestone 2 adds `/app/revenue`, a Founder-only manual revenue operating center.
 
 Manual revenue tracking is active. Stripe is not connected. See `REVENUE_SYSTEM.md` for financial rules, forecast assumptions, and future integration boundaries.
 
+## Sales Operating System
+
+Milestone 3 adds `/app/sales`, the first real Lead Engine, CRM, and Sales Pipeline. It supports manual lead entry, CSV lead import, provider-backed campaign jobs, lead scoring, prospect conversion, sales queue, outreach attempts, follow-ups, appointments, opportunities, pipeline movement, permission-aware CSV exports, and won-opportunity revenue handoff.
+
+Google Places is optional and server-only. If `GOOGLE_PLACES_API_KEY` is not configured, campaigns remain stored but provider launch reports a clear disabled/failure state instead of fake leads. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md`.
+
 ## Quick Start: Docker PostgreSQL
 
 Use this path when Docker is installed locally.
@@ -34,9 +40,12 @@ Edit `.env`:
 
 ```env
 DATABASE_URL="postgresql://ascend:ascend_dev_password@localhost:5432/ascend_os?schema=public"
+TEST_DATABASE_URL="postgresql://ascend_test:ascend_test_password@localhost:5433/ascend_os_test?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="use-a-long-random-development-secret"
 APP_ENV="development"
+GOOGLE_PLACES_API_KEY=""
+SALES_WORKER_SECRET="replace-with-a-long-random-worker-secret"
 ```
 
 Start the database and app:
@@ -111,6 +120,7 @@ Never enable these automatically in production.
 - `pnpm run lint` runs ESLint.
 - `pnpm run typecheck` runs TypeScript.
 - `pnpm run test` runs unit tests.
+- `pnpm run test:integration` runs database-backed integration tests against `TEST_DATABASE_URL`.
 - `pnpm run test:e2e` runs Playwright.
 - `pnpm run format` writes Prettier formatting.
 - `pnpm run format:check` checks formatting.

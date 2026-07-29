@@ -12,9 +12,20 @@ Founder receives all initial permissions, including full revenue access:
 
 Salesperson receives sales-focused permissions only:
 
-`dashboard.view`, `leads.view`, `leads.manage`, `calls.view_own`, `pipeline.view_own`, `clients.view`, `agents.view`.
+`dashboard.view`, `leads.view`, `prospects.view_own`, `prospects.manage_own`, `outreach.create`, `outreach.view_own`, `followups.view_own`, `followups.manage_own`, `appointments.view_own`, `appointments.manage_own`, `calls.view_own`, `pipeline.view_own`, `opportunities.manage_own`, `sales.goals.view_own`, `clients.view`, `agents.view`.
 
 Salesperson does not receive financial, banking, role administration, organization management, integration management, or full audit access.
+
+## Sales Permissions
+
+- `leads.campaigns.manage`: create and launch provider campaigns.
+- `leads.research.manage`: run research and scoring.
+- `prospects.view_own` / `prospects.view_all`: view assigned or all prospects.
+- `prospects.manage_own` / `prospects.manage_all`: update assigned or all prospects.
+- `outreach.create`: record outreach attempts.
+- `followups.*`, `appointments.*`, and `opportunities.*`: manage own or organization-wide sales work.
+- `pipeline.manage`: move and manage pipeline records.
+- `sales.goals.*` and `sales.reports.view`: view/manage targets and reporting.
 
 ## Revenue Permissions
 

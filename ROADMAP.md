@@ -2,8 +2,8 @@
 
 1. Foundation
 2. Founder Personal OS and Daily Execution Cockpit
-3. Revenue Command Center - current production milestone
-4. Lead Engine
+3. Revenue Command Center
+4. Lead Engine, CRM, and Sales Pipeline - current milestone
 5. Sales Workspace and Dialer
 6. CRM and Stripe
 7. Client and Fulfillment System

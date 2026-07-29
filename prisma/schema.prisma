@@ -140,6 +140,21 @@ model Organization {
   revenueGoals              RevenueGoal[]
   revenueForecastSnapshots  RevenueForecastSnapshot[]
   revenueAdjustments        RevenueAdjustment[]
+  leadCampaigns             LeadCampaign[]
+  leadBusinesses            LeadBusiness[]
+  leadContacts              LeadContact[]
+  leadCampaignMemberships   LeadCampaignMembership[]
+  leadAnalyses              LeadAnalysis[]
+  prospects                 Prospect[]
+  outreachAttempts          OutreachAttempt[]
+  followUps                 FollowUp[]
+  appointments              Appointment[]
+  pipelines                 Pipeline[]
+  pipelineStages            PipelineStage[]
+  opportunities             Opportunity[]
+  salesGoals                SalesGoal[]
+  contactSuppressions       ContactSuppression[]
+  backgroundJobs            BackgroundJob[]
 }
 
 model OrganizationMembership {
@@ -492,6 +507,7 @@ model Client {
   payments           Payment[]
   recurringSchedules RecurringRevenueSchedule[]
   adjustments        RevenueAdjustment[]
+  opportunities      Opportunity[]
 
   @@index([organizationId, businessName])
   @@index([organizationId, status])
@@ -516,6 +532,7 @@ model ServiceOffering {
   updatedAt         DateTime          @updatedAt
   organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contracts         RevenueContract[]
+  opportunities     Opportunity[]
 
   @@unique([organizationId, name])
   @@index([organizationId, active])
@@ -554,6 +571,8 @@ model RevenueContract {
   payments              Payment[]
   recurringSchedules    RecurringRevenueSchedule[]
   adjustments           RevenueAdjustment[]
+  sourceOpportunityId   String?
+  sourceOpportunity     Opportunity?               @relation("OpportunityRevenueContract", fields: [sourceOpportunityId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
   @@index([organizationId, clientId])
@@ -562,6 +581,7 @@ model RevenueContract {
   @@index([organizationId, startDate, endDate])
   @@index([organizationId, archivedAt])
   @@index([organizationId, externalProvider, externalId])
+  @@index([organizationId, sourceOpportunityId])
 }
 
 model Invoice {
@@ -710,4 +730,449 @@ model RevenueAdjustment {
   @@index([organizationId, invoiceId])
   @@index([organizationId, paymentId])
   @@index([organizationId, revenueContractId])
+}
+
+model LeadCampaign {
+  id                 String                   @id @default(cuid())
+  organizationId     String
+  name               String
+  industry           String
+  subIndustry        String?
+  country            String                   @default("United States")
+  state              String?
+  metroArea          String?
+  city               String?
+  searchRadiusMiles  Int?
+  searchTerms        String[]
+  minReviewCount     Int?
+  maxReviewCount     Int?
+  minRating          Decimal?                 @db.Decimal(3, 2)
+  maxRating          Decimal?                 @db.Decimal(3, 2)
+  ownerOperatedOnly  Boolean                  @default(false)
+  excludeFranchises  Boolean                  @default(true)
+  excludeSuppliers   Boolean                  @default(true)
+  excludeSchools     Boolean                  @default(true)
+  excludeJobListings Boolean                  @default(true)
+  excludeParts       Boolean                  @default(true)
+  targetLeadCount    Int                      @default(100)
+  status             String                   @default("draft")
+  sourceProvider     String                   @default("google_places")
+  createdByUserId    String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  archivedAt         DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  organization       Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships        LeadCampaignMembership[]
+  prospects          Prospect[]
+  jobs               BackgroundJob[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, sourceProvider])
+  @@index([organizationId, industry, city, state])
+  @@index([createdByUserId])
+}
+
+model LeadBusiness {
+  id                      String                   @id @default(cuid())
+  organizationId          String
+  businessName            String
+  normalizedBusinessName  String
+  primaryPhone            String?
+  normalizedPhone         String?
+  websiteUrl              String?
+  normalizedDomain        String?
+  address                 String?
+  city                    String?
+  state                   String?
+  postalCode              String?
+  country                 String                   @default("United States")
+  latitude                Decimal?                 @db.Decimal(10, 7)
+  longitude               Decimal?                 @db.Decimal(10, 7)
+  industry                String?
+  subIndustry             String?
+  googlePlaceId           String?
+  googleMapsUrl           String?
+  rating                  Decimal?                 @db.Decimal(3, 2)
+  reviewCount             Int?
+  businessStatus          String?
+  source                  String                   @default("manual")
+  sourceRecordId          String?
+  franchiseStatus         String?
+  ownerOperatedLikelihood Int?
+  estimatedCompanySize    String?
+  notes                   String?
+  archivedAt              DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  organization            Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts                LeadContact[]
+  campaignMemberships     LeadCampaignMembership[]
+  analyses                LeadAnalysis[]
+  prospects               Prospect[]
+  suppressions            ContactSuppression[]
+
+  @@unique([organizationId, googlePlaceId])
+  @@index([organizationId, normalizedPhone])
+  @@index([organizationId, normalizedDomain])
+  @@index([organizationId, normalizedBusinessName, address])
+  @@index([organizationId, industry, city, state])
+  @@index([organizationId, archivedAt])
+}
+
+model LeadContact {
+  id                 String            @id @default(cuid())
+  organizationId     String
+  leadBusinessId     String
+  firstName          String?
+  lastName           String?
+  fullName           String?
+  jobTitle           String?
+  role               String?
+  email              String?
+  phone              String?
+  isOwner            Boolean           @default(false)
+  isDecisionMaker    Boolean           @default(false)
+  confidenceScore    Int?
+  source             String            @default("manual")
+  verificationStatus String            @default("unverified")
+  notes              String?
+  archivedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness       LeadBusiness      @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  prospects          Prospect[]
+  attempts           OutreachAttempt[]
+  appointments       Appointment[]
+
+  @@index([organizationId, leadBusinessId])
+  @@index([organizationId, email])
+  @@index([organizationId, phone])
+}
+
+model LeadCampaignMembership {
+  id                     String       @id @default(cuid())
+  organizationId         String
+  campaignId             String
+  leadBusinessId         String
+  addedAt                DateTime     @default(now())
+  sourceRank             Int?
+  searchQuery            String?
+  originalResultPosition Int?
+  campaignStatus         String       @default("new")
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign               LeadCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadBusiness           LeadBusiness @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, leadBusinessId])
+  @@index([organizationId, campaignStatus])
+  @@index([organizationId, leadBusinessId])
+}
+
+model LeadAnalysis {
+  id                         String       @id @default(cuid())
+  organizationId             String
+  leadBusinessId             String
+  websiteStatus              String       @default("unknown")
+  websiteQualityScore        Int          @default(0)
+  mobileQualityScore         Int          @default(0)
+  conversionQualityScore     Int          @default(0)
+  seoWeaknessScore           Int          @default(0)
+  gbpWeaknessScore           Int          @default(0)
+  automationOpportunityScore Int          @default(0)
+  ownerAccessibilityScore    Int          @default(0)
+  abilityToPayScore          Int          @default(0)
+  urgencyScore               Int          @default(0)
+  overallFitScore            Int          @default(0)
+  classification             String       @default("needs_review")
+  primaryWeaknesses          String[]
+  recommendedService         String?
+  researchSummary            String?
+  evidence                   Json
+  analyzerVersion            String       @default("deterministic-v1")
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness               LeadBusiness @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, classification])
+  @@index([organizationId, leadBusinessId, createdAt])
+}
+
+model Prospect {
+  id                  String               @id @default(cuid())
+  organizationId      String
+  leadBusinessId      String
+  primaryContactId    String?
+  assignedUserId      String?
+  status              String               @default("new")
+  priority            String               @default("standard")
+  leadSource          String               @default("manual")
+  leadCampaignId      String?
+  lastContactAt       DateTime?
+  nextActionAt        DateTime?
+  nextActionType      String?
+  attemptCount        Int                  @default(0)
+  noAnswerCount       Int                  @default(0)
+  conversationCount   Int                  @default(0)
+  estimatedValueCents Int?
+  recommendedService  String?
+  notes               String?
+  archivedAt          DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness        LeadBusiness         @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  primaryContact      LeadContact?         @relation(fields: [primaryContactId], references: [id], onDelete: SetNull)
+  leadCampaign        LeadCampaign?        @relation(fields: [leadCampaignId], references: [id], onDelete: SetNull)
+  outreachAttempts    OutreachAttempt[]
+  followUps           FollowUp[]
+  appointments        Appointment[]
+  opportunities       Opportunity[]
+  suppressions        ContactSuppression[]
+
+  @@unique([organizationId, leadBusinessId, archivedAt])
+  @@index([organizationId, assignedUserId, status])
+  @@index([organizationId, nextActionAt])
+  @@index([organizationId, priority, status])
+  @@index([organizationId, leadCampaignId])
+}
+
+model OutreachAttempt {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  prospectId         String
+  userId             String?
+  contactId          String?
+  channel            String
+  direction          String       @default("outbound")
+  startedAt          DateTime
+  completedAt        DateTime?
+  durationSeconds    Int?
+  outcome            String
+  notes              String?
+  externalProvider   String?
+  externalActivityId String?
+  recordingUrl       String?
+  transcriptStatus   String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  prospect           Prospect     @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  contact            LeadContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  followUps          FollowUp[]
+
+  @@index([organizationId, userId, startedAt])
+  @@index([organizationId, prospectId, startedAt])
+  @@index([organizationId, outcome])
+  @@index([externalProvider, externalActivityId])
+}
+
+model FollowUp {
+  id                       String           @id @default(cuid())
+  organizationId           String
+  prospectId               String
+  assignedUserId           String?
+  relatedOutreachAttemptId String?
+  type                     String
+  dueAt                    DateTime
+  status                   String           @default("open")
+  priority                 String           @default("standard")
+  notes                    String?
+  completedAt              DateTime?
+  archivedAt               DateTime?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  organization             Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  prospect                 Prospect         @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  relatedOutreachAttempt   OutreachAttempt? @relation(fields: [relatedOutreachAttemptId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, assignedUserId, status])
+  @@index([organizationId, dueAt])
+  @@index([organizationId, prospectId, status])
+}
+
+model Appointment {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  prospectId         String
+  opportunityId      String?
+  assignedSetterId   String?
+  assignedCloserId   String?
+  contactId          String?
+  title              String
+  startAt            DateTime
+  endAt              DateTime
+  timezone           String
+  status             String       @default("scheduled")
+  meetingType        String       @default("discovery")
+  meetingUrl         String?
+  location           String?
+  bookingSource      String?
+  notes              String?
+  confirmationStatus String       @default("pending")
+  reminderStatus     String       @default("not_sent")
+  externalCalendarId String?
+  externalEventId    String?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  prospect           Prospect     @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  opportunity        Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  contact            LeadContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, assignedSetterId, startAt])
+  @@index([organizationId, assignedCloserId, startAt])
+  @@index([organizationId, startAt])
+  @@index([organizationId, status])
+  @@index([organizationId, opportunityId])
+}
+
+model Pipeline {
+  id             String          @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  isDefault      Boolean         @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stages         PipelineStage[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, isDefault])
+  @@index([organizationId, archivedAt])
+}
+
+model PipelineStage {
+  id                 String        @id @default(cuid())
+  organizationId     String
+  pipelineId         String
+  name               String
+  sortOrder          Int
+  defaultProbability Int           @default(10)
+  isWonStage         Boolean       @default(false)
+  isLostStage        Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  organization       Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pipeline           Pipeline      @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  opportunities      Opportunity[]
+
+  @@unique([pipelineId, name])
+  @@index([organizationId, pipelineId, sortOrder])
+  @@index([organizationId, isWonStage, isLostStage])
+}
+
+model Opportunity {
+  id                  String            @id @default(cuid())
+  organizationId      String
+  prospectId          String
+  clientId            String?
+  assignedCloserId    String?
+  name                String
+  pipelineStageId     String
+  serviceOfferingId   String?
+  estimatedValueCents Int
+  weightedValueCents  Int
+  probabilityPercent  Int
+  expectedCloseDate   DateTime?
+  lastActivityAt      DateTime?
+  nextActionAt        DateTime?
+  status              String            @default("open")
+  lossReason          String?
+  notes               String?
+  wonAt               DateTime?
+  lostAt              DateTime?
+  archivedAt          DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  organization        Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  prospect            Prospect          @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  client              Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  pipelineStage       PipelineStage     @relation(fields: [pipelineStageId], references: [id], onDelete: Restrict)
+  serviceOffering     ServiceOffering?  @relation(fields: [serviceOfferingId], references: [id], onDelete: SetNull)
+  appointments        Appointment[]
+  revenueContracts    RevenueContract[] @relation("OpportunityRevenueContract")
+
+  @@index([organizationId, pipelineStageId])
+  @@index([organizationId, assignedCloserId, status])
+  @@index([organizationId, expectedCloseDate])
+  @@index([organizationId, prospectId])
+  @@index([organizationId, clientId])
+  @@index([organizationId, status])
+}
+
+model SalesGoal {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String?
+  teamId         String?
+  periodType     String
+  startDate      DateTime
+  endDate        DateTime
+  metric         String
+  targetValue    Int
+  status         String       @default("active")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, metric, startDate, endDate])
+  @@index([organizationId, status])
+}
+
+model ContactSuppression {
+  id             String        @id @default(cuid())
+  organizationId String
+  phone          String?
+  email          String?
+  leadBusinessId String?
+  prospectId     String?
+  channel        String
+  reason         String
+  source         String        @default("manual")
+  createdById    String?
+  expiresAt      DateTime?
+  createdAt      DateTime      @default(now())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness   LeadBusiness? @relation(fields: [leadBusinessId], references: [id], onDelete: SetNull)
+  prospect       Prospect?     @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, phone, channel])
+  @@index([organizationId, email, channel])
+  @@index([organizationId, leadBusinessId])
+  @@index([organizationId, prospectId])
+}
+
+model BackgroundJob {
+  id              String        @id @default(cuid())
+  organizationId  String
+  campaignId      String?
+  type            String
+  status          String        @default("queued")
+  input           Json
+  progressCurrent Int           @default(0)
+  progressTotal   Int           @default(0)
+  resultSummary   Json?
+  errorMessage    String?
+  attemptCount    Int           @default(0)
+  maxAttempts     Int           @default(3)
+  lockedAt        DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  heartbeatAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign        LeadCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, type])
+  @@index([organizationId, campaignId])
+  @@index([status, lockedAt])
 }

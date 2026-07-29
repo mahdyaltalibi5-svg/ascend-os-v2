@@ -95,9 +95,13 @@ Schema fields are prepared for future sync:
 
 Future Stripe work should add provider services for customer, invoice, payment, subscription, refund, webhook, idempotency, and sync-error handling without replacing the core ledger.
 
+## Sales Revenue Handoff
+
+Won opportunities can create linked clients and signed revenue contracts. The handoff runs in a transaction, prevents duplicate contract creation for the same opportunity, and stores `RevenueContract.sourceOpportunityId` so future reporting can attribute revenue to campaign, lead source, setter, closer, industry, location, and service.
+
 ## Known Limitations
 
-- CSV import is deferred; CSV export is implemented.
+- Revenue CSV import is deferred; revenue CSV export is implemented. Sales CSV lead import is implemented in `/app/sales`.
 - Payment plans are modeled through contracts, invoices, and recurring schedules, but do not yet have a dedicated installment schedule UI.
 - Forecast weights are deterministic defaults, not AI predictions.
 - Invoice overdue status is derived from due date in the dashboard; a background job can later persist status transitions.

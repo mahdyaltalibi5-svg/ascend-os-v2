@@ -1,5 +1,64 @@
 # Ascend OS Milestone 1 Plan
 
+## Milestone 3 Lead Engine, CRM, and Sales Pipeline
+
+### Current repository state inspected
+
+- Branch is `main`, tracking `origin/main`, and the working tree was clean before Milestone 3 edits.
+- Production is live at `https://ascend-os-v2-app.vercel.app`.
+- Latest verified production commit is `c5d7ac4 Build revenue command center`.
+- Existing production capabilities include authentication, organization-aware tenancy, Founder/Salesperson roles, Personal OS, Revenue Command Center, audit logging, PWA support, Prisma/PostgreSQL, GitHub, and Vercel deployment.
+- The Prisma schema currently contains foundation, Personal OS, and Revenue models only.
+- Sales navigation exists but still points to a foundation placeholder at `/app/module/sales`.
+- Existing `leads.*`, `calls.*`, and `pipeline.*` permissions are broad Milestone 1 placeholders and need granular sales operations permissions.
+- Database-backed tests currently skip when `TEST_DATABASE_URL` is missing, and local Docker Compose only defines the development database.
+
+### Conflicts with the Milestone 3 prompt
+
+- There are no lead campaign, lead business, contact, analysis, prospect, outreach, follow-up, appointment, opportunity, pipeline, sales goal, suppression, import, or background-job models.
+- No Google Places provider abstraction or safe disabled production state exists.
+- No bounded website-analysis service, SSRF protection, deterministic scoring, deduplication, sales metrics, sales queue, follow-up policy, or revenue handoff exists.
+- No real Founder Sales dashboard or Salesperson workspace exists.
+- CSV import/export for sales records does not exist.
+- CI does not yet run integration tests with an isolated `TEST_DATABASE_URL`.
+
+### Assumptions
+
+- Production must stay functional when `GOOGLE_PLACES_API_KEY` is absent; provider campaigns should show a clear disabled/failure state instead of producing fake leads.
+- Manual lead entry and CSV import are first-class paths because they do not depend on external provider credentials.
+- Milestone 3 should remain additive: no production reset, no destructive migrations, and no changes that weaken existing Personal OS or Revenue flows.
+- Background jobs will be implemented with a secure Vercel-compatible worker endpoint and bounded batch processor; a future Mac mini worker will use a documented scoped API rather than direct public database access.
+- The first website analyzer will be deterministic, bounded, and no-JavaScript; optional AI summaries remain deferred unless a key is explicitly configured later.
+- Sales money values will use integer cents, matching the Revenue Command Center.
+
+### Implementation sequence
+
+1. [x] Add additive Prisma models, indexes, migration, seed data, default pipeline stages, sales goals, and granular permissions.
+2. [x] Add normalization, deduplication, CSV safety, URL/SSRF safety, website analysis, lead scoring, queue ranking, attempt policy, follow-up automation, pipeline metrics, notifications, and deterministic command parsing.
+3. [x] Add server-side sales read service, actions, CSV import/export, background-job processor, worker endpoint, and revenue handoff transaction.
+4. [x] Build `/app/sales`, `/app/sales/queue`, `/app/sales/follow-ups`, `/app/sales/appointments`, `/app/sales/pipeline`, `/app/sales/performance`, and mobile-friendly working surfaces.
+5. [x] Integrate sales recommendations and one-click Personal OS sales priorities.
+6. [x] Add unit, integration, and Playwright tests with deterministic/manual provider-safe flows.
+7. [x] Update README, architecture, data model, permissions, security, revenue docs, roadmap, agent notes, and add `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md`.
+8. [x] Update Docker Compose and CI so integration and Playwright tests run against an isolated non-production PostgreSQL database.
+9. [ ] Run local validation commands, apply non-production migrations where possible, deploy/migrate production if credentials are available, smoke test, commit, and push.
+
+### Milestone 3 verification results
+
+- `pnpm install --config.confirm-modules-purge=false`: passed, with a registry metadata warning caused by restricted network.
+- `pnpm exec prisma generate`: passed.
+- `pnpm exec prisma validate`: passed.
+- `pnpm run format`: passed.
+- `pnpm run format:check`: passed.
+- `pnpm run lint`: passed.
+- `pnpm run typecheck`: passed.
+- `pnpm run test`: passed; local database-backed revenue and sales integration tests skipped because no `TEST_DATABASE_URL` database is running.
+- `pnpm run test:integration`: passed structurally; core DB integration tests skipped for the same missing local test database.
+- `pnpm run build`: passed.
+- `pnpm run test:e2e`: failed locally because PostgreSQL is not connected; the signup pages showed the expected database-unavailable message.
+- Docker is not installed in this workspace, so local PostgreSQL/test PostgreSQL containers could not be started here.
+- `gh` and `vercel` CLIs are not installed in this workspace.
+
 ## Milestone 2 Revenue Command Center
 
 ### Current repository state inspected

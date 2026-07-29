@@ -17,6 +17,7 @@ import { writeAuditEvent } from "@/lib/server/audit";
 import { hashForStorage, randomToken } from "@/lib/server/crypto";
 import { normalizeEmail, slugify } from "@/lib/utils";
 import { defaultServiceOfferings } from "@/lib/revenue/constants";
+import { defaultPipelineStages, defaultSalesGoals } from "@/lib/sales/constants";
 
 const ACTIVE_ORG_COOKIE = "ascend_active_org";
 
@@ -97,6 +98,81 @@ export async function ensureDefaultServiceOfferings(tx: Tx, organizationId: stri
   );
 }
 
+export async function ensureDefaultSalesSystem(tx: Tx, organizationId: string) {
+  const pipeline = await tx.pipeline.upsert({
+    where: { organizationId_name: { organizationId, name: "Ascend Sales Pipeline" } },
+    update: {
+      isDefault: true,
+      archivedAt: null,
+      description: "Default Ascend sales pipeline for prospects, appointments, and revenue handoff."
+    },
+    create: {
+      organizationId,
+      name: "Ascend Sales Pipeline",
+      description:
+        "Default Ascend sales pipeline for prospects, appointments, and revenue handoff.",
+      isDefault: true
+    }
+  });
+
+  await Promise.all(
+    defaultPipelineStages.map(
+      ([name, probability, isWonStage = false, isLostStage = false], index) =>
+        tx.pipelineStage.upsert({
+          where: { pipelineId_name: { pipelineId: pipeline.id, name } },
+          update: {
+            organizationId,
+            sortOrder: index,
+            defaultProbability: probability,
+            isWonStage,
+            isLostStage
+          },
+          create: {
+            organizationId,
+            pipelineId: pipeline.id,
+            name,
+            sortOrder: index,
+            defaultProbability: probability,
+            isWonStage,
+            isLostStage
+          }
+        })
+    )
+  );
+
+  const now = new Date();
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+  for (const goal of defaultSalesGoals) {
+    const existingGoal = await tx.salesGoal.findFirst({
+      where: {
+        organizationId,
+        userId: null,
+        metric: goal.metric,
+        periodType: goal.periodType,
+        startDate: dayStart,
+        endDate: dayEnd
+      }
+    });
+
+    if (!existingGoal) {
+      await tx.salesGoal.create({
+        data: {
+          organizationId,
+          periodType: goal.periodType,
+          metric: goal.metric,
+          targetValue: goal.targetValue,
+          startDate: dayStart,
+          endDate: dayEnd
+        }
+      });
+    }
+  }
+
+  return pipeline;
+}
+
 async function assignPermissionsToRole(tx: Tx, roleId: string, permissions: PermissionKey[]) {
   const records = await tx.permission.findMany({
     where: { key: { in: permissions } }
@@ -147,6 +223,7 @@ export async function createOrganizationForUser(input: {
 
     const { founderRole } = await ensureDefaultRolesForOrganization(tx, created.id);
     await ensureDefaultServiceOfferings(tx, created.id);
+    await ensureDefaultSalesSystem(tx, created.id);
 
     const membership = await tx.organizationMembership.create({
       data: {
@@ -326,6 +403,12 @@ export async function getOrganizationContext(userId: string) {
   });
   if (serviceCount === 0) {
     await ensureDefaultServiceOfferings(prisma, activeOrganizationId);
+  }
+  const pipelineCount = await prisma.pipeline.count({
+    where: { organizationId: activeOrganizationId, archivedAt: null }
+  });
+  if (pipelineCount === 0) {
+    await ensureDefaultSalesSystem(prisma, activeOrganizationId);
   }
 
   const membership = await getMembership(userId, activeOrganizationId);

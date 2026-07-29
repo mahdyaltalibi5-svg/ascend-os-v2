@@ -42,6 +42,8 @@ Roles are organization-scoped and map to granular permissions through `RolePermi
 
 Prisma models users, organizations, memberships, roles, permissions, invitations, audit events, notification preferences, branding, auth-compatible session entities, priorities, operating notes, focus blocks, daily plans/reviews, goals, and in-app notifications.
 
+Milestone 3 adds organization-scoped sales records for lead campaigns, businesses, contacts, campaign memberships, analyses, prospects, outreach attempts, follow-ups, appointments, pipelines, stages, opportunities, sales goals, suppressions, and background jobs. Sales reads live in `lib/server/sales.ts`; guarded sales mutations live in `app/(app)/app/sales/actions.ts`.
+
 ## Audit Logging
 
 `writeAuditEvent` records major account, organization, and Personal OS actions with safe metadata, actor, organization, entity type, entity id, timestamp, user agent, and hashed request IP where available.
@@ -68,3 +70,5 @@ The manifest and icons support installation. The service worker caches only stat
 - Redis/background jobs for queues, rate limits, scheduled work, and email delivery.
 - Mac mini worker for approved local automations.
 - Third-party integrations for Stripe, Twilio, Google, ad platforms, and CRM data after explicit connection flows exist.
+
+The current sales worker endpoint is `POST /api/sales/jobs`, protected by `SALES_WORKER_SECRET` or `CRON_SECRET`. See `WORKERS.md`.

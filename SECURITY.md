@@ -40,6 +40,10 @@ Operational records prefer archive or soft-delete timestamps over hard deletion.
 
 The service worker avoids caching `/api/*` and `/app/*` authenticated tenant data. Review this before adding offline features.
 
+## Lead Research Security
+
+Website analysis validates HTTP(S) URLs, blocks private networks and localhost, checks DNS resolution, enforces strict timeouts, limits response size, validates HTML content type, and does not execute arbitrary JavaScript. Provider keys and worker secrets are server-only. CSV exports escape formula-leading cells. Suppression records are checked before outreach attempts.
+
 ## Current Limitations
 
 - Email verification and password reset require a production email provider.
@@ -48,6 +52,7 @@ The service worker avoids caching `/api/*` and `/app/*` authenticated tenant dat
 - Playwright depends on a running local database and seeded data.
 - Database-backed integration tests require `TEST_DATABASE_URL` and must not target production.
 - Deterministic recommendations are not external AI output.
+- Google Places lead generation is disabled honestly when `GOOGLE_PLACES_API_KEY` is absent.
 
 ## Production-Hardening Checklist
 

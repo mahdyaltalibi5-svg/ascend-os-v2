@@ -22,11 +22,27 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      postgres-test:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ascend_test
+          POSTGRES_PASSWORD: ascend_test_password
+          POSTGRES_DB: ascend_os_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U ascend_test -d ascend_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://ascend:ascend_dev_password@localhost:5432/ascend_os?schema=public
+      TEST_DATABASE_URL: postgresql://ascend_test:ascend_test_password@localhost:5433/ascend_os_test?schema=public
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ci-only-replace-in-production-with-a-long-secret
       APP_ENV: development
+      SALES_WORKER_SECRET: ci-sales-worker-secret
+      GOOGLE_PLACES_API_KEY: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,11 +53,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec prisma generate
       - run: pnpm exec prisma migrate deploy
+      - run: pnpm exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://ascend_test:ascend_test_password@localhost:5433/ascend_os_test?schema=public
       - run: pnpm run db:seed
       - run: pnpm run format:check
       - run: pnpm run lint
       - run: pnpm run typecheck
       - run: pnpm run test
+      - run: pnpm run test:integration
       - run: pnpm run build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:e2e

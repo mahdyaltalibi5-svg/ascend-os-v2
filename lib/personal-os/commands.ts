@@ -1,4 +1,5 @@
 import { parseRevenueCommand, type RevenueCommand } from "@/lib/revenue/commands";
+import { parseSalesCommand, type SalesCommand } from "@/lib/sales/commands";
 
 export type ParsedCommand =
   | { kind: "add_priority"; title: string; priorityLevel: string; timeframe: string }
@@ -12,6 +13,7 @@ export type ParsedCommand =
   | { kind: "start_next_focus" }
   | { kind: "end_day" }
   | { kind: "revenue"; command: RevenueCommand }
+  | { kind: "sales"; command: SalesCommand }
   | { kind: "unknown"; message: string };
 
 export function parsePersonalCommand(input: string): ParsedCommand {
@@ -22,6 +24,9 @@ export function parsePersonalCommand(input: string): ParsedCommand {
 
   const revenueCommand = parseRevenueCommand(command);
   if (revenueCommand) return { kind: "revenue", command: revenueCommand };
+
+  const salesCommand = parseSalesCommand(command);
+  if (salesCommand) return { kind: "sales", command: salesCommand };
 
   if (lower.includes("what should i work") || lower.includes("highest-value")) {
     return { kind: "recommend_next" };

@@ -773,6 +773,8 @@ async function executeParsedCommand(
     });
   } else if (command.kind === "revenue") {
     await executeRevenueCommand(context, command.command);
+  } else if (command.kind === "sales") {
+    await executeSalesCommand(context, command.command);
   }
 }
 
@@ -889,6 +891,100 @@ async function executeRevenueCommand(
       userId: context.userId,
       category: "revenue",
       body: "Revenue command needs confirmation before writing financial records. Open Revenue Command Center to review and submit the form."
+    }
+  });
+}
+
+async function executeSalesCommand(
+  context: Awaited<ReturnType<typeof requirePersonalCommandContext>>,
+  command: Extract<ReturnType<typeof parsePersonalCommand>, { kind: "sales" }>["command"]
+) {
+  if (
+    !context.permissions.some((permission) =>
+      ["prospects.view_own", "prospects.view_all", "sales.reports.view"].includes(permission)
+    )
+  ) {
+    return;
+  }
+
+  const all = context.permissions.includes("prospects.view_all");
+  const prospectWhere = {
+    organizationId: context.organizationId,
+    archivedAt: null,
+    ...(all ? {} : { assignedUserId: context.userId })
+  };
+
+  if (command.type === "create_priority") {
+    await prisma.personalPriority.create({
+      data: {
+        organizationId: context.organizationId,
+        userId: context.userId,
+        title: command.title,
+        category: "sales",
+        priorityLevel: "high",
+        urgency: "high",
+        timeframe: "today",
+        sortOrder: await nextSortOrder(context.userId, context.organizationId, "today")
+      }
+    });
+    return;
+  }
+
+  if (command.type === "callable_count") {
+    const count = await prisma.prospect.count({
+      where: {
+        ...prospectWhere,
+        status: {
+          in: ["ready", "assigned", "attempting_contact", "connected", "qualified", "nurture"]
+        }
+      }
+    });
+    await createSalesCommandNote(
+      context,
+      `Sales command result: ${count} callable prospects are available.`
+    );
+    return;
+  }
+
+  if (command.type === "hot_no_attempts") {
+    const count = await prisma.prospect.count({
+      where: {
+        ...prospectWhere,
+        priority: { in: ["critical", "hot"] },
+        attemptCount: 0
+      }
+    });
+    await createSalesCommandNote(
+      context,
+      `Sales command result: ${count} Hot prospects have no attempts.`
+    );
+    return;
+  }
+
+  if (command.type === "overdue_followups") {
+    const count = await prisma.followUp.count({
+      where: {
+        organizationId: context.organizationId,
+        status: "open",
+        dueAt: { lt: new Date() },
+        archivedAt: null,
+        ...(all ? {} : { assignedUserId: context.userId })
+      }
+    });
+    await createSalesCommandNote(context, `Sales command result: ${count} follow-ups are overdue.`);
+  }
+}
+
+async function createSalesCommandNote(
+  context: Awaited<ReturnType<typeof requirePersonalCommandContext>>,
+  body: string
+) {
+  await prisma.operatingNote.create({
+    data: {
+      organizationId: context.organizationId,
+      userId: context.userId,
+      category: "sales",
+      body
     }
   });
 }

@@ -1,0 +1,54 @@
+import { expect, test } from "@playwright/test";
+
+test("founder creates lead, converts prospect, records outreach, books appointment, and creates opportunity", async ({
+  page
+}) => {
+  const unique = Date.now();
+  const email = `sales-founder-${unique}@example.com`;
+  const password = "SecurePass123";
+  const businessName = `Apex Sales ${unique}`;
+
+  await page.goto("/signup");
+  await page.getByLabel("Name").fill("Sales Founder");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible();
+  await page.getByLabel("Organization name").fill(`Sales Org ${unique}`);
+  await page.getByLabel("Website").fill("https://example.com");
+  await page.getByRole("button", { name: "Create organization" }).click();
+
+  await expect(page).toHaveURL(/\/app$/);
+  await page.getByRole("link", { name: /Sales/ }).click();
+  await expect(page.getByRole("heading", { name: "Lead engine and pipeline" })).toBeVisible();
+
+  await page.getByLabel("Business name").fill(businessName);
+  await page.getByLabel("Phone").fill("602-555-0100");
+  await page.getByLabel("Website").fill("https://example.com");
+  await page.getByLabel("Industry").fill("Roofing");
+  await page.getByRole("button", { name: "Add lead" }).click();
+  await expect(page.getByText(businessName)).toBeVisible();
+
+  await page.getByRole("button", { name: "Convert" }).first().click();
+  await page.getByRole("link", { name: "Queue" }).click();
+  await expect(page.getByText(businessName)).toBeVisible();
+  await page.getByLabel("Outcome").selectOption("interested");
+  await page.getByLabel("Duration seconds").fill("180");
+  await page.getByRole("button", { name: "Save disposition" }).click();
+
+  await page.getByRole("link", { name: "Appointments" }).click();
+  await page.getByLabel("Title").fill("Sales call");
+  await page.getByLabel("Start").fill("2026-08-01T10:00");
+  await page.getByLabel("End").fill("2026-08-01T11:00");
+  await page.getByRole("button", { name: "Book appointment" }).click();
+  await expect(page.getByText("Sales call")).toBeVisible();
+
+  await page.getByRole("link", { name: "Pipeline" }).click();
+  await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("heading", { name: "Lead engine and pipeline" })).toBeVisible();
+});

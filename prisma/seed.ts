@@ -7,6 +7,7 @@ import {
   type PermissionKey
 } from "../lib/permissions";
 import { defaultServiceOfferings } from "../lib/revenue/constants";
+import { defaultPipelineStages, defaultSalesGoals } from "../lib/sales/constants";
 import { hashPassword } from "../lib/server/crypto";
 
 const prisma = new PrismaClient();
@@ -121,6 +122,7 @@ async function main() {
   await assignPermissions(founderRole.id, founderPermissions);
   await assignPermissions(salespersonRole.id, salespersonPermissions);
   await seedServiceOfferings(organization.id);
+  await seedSalesDefaults(organization.id);
 
   const founderMembership = await prisma.organizationMembership.upsert({
     where: { organizationId_userId: { organizationId: organization.id, userId: founder.id } },
@@ -231,6 +233,80 @@ async function seedServiceOfferings(organizationId: string) {
         active: true
       }
     });
+  }
+}
+
+async function seedSalesDefaults(organizationId: string) {
+  const pipeline = await prisma.pipeline.upsert({
+    where: { organizationId_name: { organizationId, name: "Ascend Sales Pipeline" } },
+    update: {
+      description:
+        "Default Ascend sales pipeline for prospects, appointments, and revenue handoff.",
+      isDefault: true,
+      archivedAt: null
+    },
+    create: {
+      organizationId,
+      name: "Ascend Sales Pipeline",
+      description:
+        "Default Ascend sales pipeline for prospects, appointments, and revenue handoff.",
+      isDefault: true
+    }
+  });
+
+  for (const [
+    index,
+    [name, probability, isWonStage = false, isLostStage = false]
+  ] of defaultPipelineStages.entries()) {
+    await prisma.pipelineStage.upsert({
+      where: { pipelineId_name: { pipelineId: pipeline.id, name } },
+      update: {
+        organizationId,
+        sortOrder: index,
+        defaultProbability: probability,
+        isWonStage,
+        isLostStage
+      },
+      create: {
+        organizationId,
+        pipelineId: pipeline.id,
+        name,
+        sortOrder: index,
+        defaultProbability: probability,
+        isWonStage,
+        isLostStage
+      }
+    });
+  }
+
+  const now = new Date();
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+  for (const goal of defaultSalesGoals) {
+    const existingGoal = await prisma.salesGoal.findFirst({
+      where: {
+        organizationId,
+        userId: null,
+        metric: goal.metric,
+        periodType: goal.periodType,
+        startDate: dayStart,
+        endDate: dayEnd
+      }
+    });
+
+    if (!existingGoal) {
+      await prisma.salesGoal.create({
+        data: {
+          organizationId,
+          periodType: goal.periodType,
+          metric: goal.metric,
+          targetValue: goal.targetValue,
+          startDate: dayStart,
+          endDate: dayEnd
+        }
+      });
+    }
   }
 }
 
