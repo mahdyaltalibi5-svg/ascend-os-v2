@@ -51,6 +51,13 @@ export function SigninForm() {
     });
 
     if (result?.ok) {
+      const sessionReady = await waitForCredentialSession();
+      if (!sessionReady) {
+        setMessage("Sign-in took too long. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
       window.location.assign(result.url ?? "/app");
       return;
     }
@@ -82,4 +89,20 @@ export function SigninForm() {
       </div>
     </form>
   );
+}
+
+async function waitForCredentialSession() {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const session = (await fetch("/api/auth/session", {
+      cache: "no-store",
+      credentials: "same-origin"
+    })
+      .then((response) => response.json())
+      .catch(() => null)) as { user?: unknown } | null;
+
+    if (session?.user) return true;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+
+  return false;
 }
