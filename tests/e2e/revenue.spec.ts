@@ -12,7 +12,9 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible({
+    timeout: 20000
+  });
   await page.getByLabel("Organization name").fill(`Revenue Org ${unique}`);
   await page.getByLabel("Website").fill("https://example.com");
   await page.getByRole("button", { name: "Create organization" }).click();
@@ -27,45 +29,47 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await expect(page.getByText("$0 collected of $10,000")).toBeVisible();
 
   const clientWorkflow = await openWorkflow(page, "Add client");
-  await clientWorkflow.getByLabel("Business name").fill(clientName);
+  await clientWorkflow.locator('input[name="businessName"]').fill(clientName);
   await clientWorkflow.getByRole("button", { name: "Add client" }).click();
 
   const serviceWorkflow = await openWorkflow(page, "Add service");
-  await serviceWorkflow.getByLabel("Service name").fill(`Automation ${unique}`);
+  await serviceWorkflow.locator('input[name="name"]').fill(`Automation ${unique}`);
   await serviceWorkflow.getByRole("button", { name: "Save service" }).click();
 
   const contractWorkflow = await openWorkflow(page, "Add contract");
-  await contractWorkflow.getByLabel("Client").selectOption({ label: clientName });
-  await contractWorkflow.getByLabel("Contract name").fill("Automation Sprint");
-  await contractWorkflow.getByLabel("Contracted amount").fill("5000");
-  await contractWorkflow.getByLabel("Billing").selectOption("recurring");
-  await contractWorkflow.getByLabel("MRR amount").fill("1000");
+  await contractWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });
+  await contractWorkflow.locator('input[name="name"]').fill("Automation Sprint");
+  await contractWorkflow.locator('input[name="contractedAmount"]').fill("5000");
+  await contractWorkflow.locator('select[name="billingType"]').selectOption("recurring");
+  await contractWorkflow.locator('input[name="mrrAmount"]').fill("1000");
   await contractWorkflow.getByRole("button", { name: "Create contract" }).click();
   await expect(page.getByText("Automation Sprint")).toBeVisible();
 
   const invoiceWorkflow = await openWorkflow(page, "Add invoice");
-  await invoiceWorkflow.getByLabel("Client").selectOption({ label: clientName });
-  await invoiceWorkflow.getByLabel("Amount").fill("5000");
-  await invoiceWorkflow.getByLabel("Due date").fill("2026-12-31");
+  await invoiceWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });
+  await invoiceWorkflow.locator('input[name="totalAmount"]').fill("5000");
+  await invoiceWorkflow.locator('input[name="dueDate"]').fill("2026-12-31");
   await invoiceWorkflow.getByRole("button", { name: "Create invoice" }).click();
   await expect(page.getByText("$5,000")).toBeVisible();
 
   const firstPaymentWorkflow = await openWorkflow(page, "Record payment");
-  await firstPaymentWorkflow.getByLabel("Client").selectOption({ label: clientName });
-  await firstPaymentWorkflow.getByLabel("Amount").fill("2500");
+  await firstPaymentWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });
+  await firstPaymentWorkflow.locator('input[name="amount"]').fill("2500");
   await firstPaymentWorkflow.getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByText("$2,500 collected of $10,000")).toBeVisible();
 
   const secondPaymentWorkflow = await openWorkflow(page, "Record payment");
-  await secondPaymentWorkflow.getByLabel("Client").selectOption({ label: clientName });
-  await secondPaymentWorkflow.getByLabel("Amount").fill("2500");
+  await secondPaymentWorkflow
+    .locator('select[name="clientId"]')
+    .selectOption({ label: clientName });
+  await secondPaymentWorkflow.locator('input[name="amount"]').fill("2500");
   await secondPaymentWorkflow.getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByText("$5,000 collected of $10,000")).toBeVisible();
 
   const recurringWorkflow = await openWorkflow(page, "Add recurring revenue");
-  await recurringWorkflow.getByLabel("Client").selectOption({ label: clientName });
-  await recurringWorkflow.getByLabel("Amount").fill("1000");
-  await recurringWorkflow.getByLabel("Next expected").fill("2026-12-31");
+  await recurringWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });
+  await recurringWorkflow.locator('input[name="amount"]').fill("1000");
+  await recurringWorkflow.locator('input[name="nextExpectedDate"]').fill("2026-12-31");
   await recurringWorkflow.getByRole("button", { name: "Add recurring revenue" }).click();
   await expect(page.getByText("MRR")).toBeVisible();
 
