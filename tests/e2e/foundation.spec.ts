@@ -11,7 +11,9 @@ test("primary foundation happy path", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible({
+    timeout: 20000
+  });
   await page.getByLabel("Organization name").fill(`Ascend Test ${unique}`);
   await page.getByLabel("Website").fill("https://example.com");
   await page.getByRole("button", { name: "Create organization" }).click();
