@@ -44,7 +44,7 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await page.getByLabel("Start").fill("2026-08-01T10:00");
   await page.getByRole("textbox", { name: "End" }).fill("2026-08-01T11:00");
   await page.getByRole("button", { name: "Book appointment" }).click();
-  await expect(page.getByText("Sales call")).toBeVisible();
+  await expect(page.getByRole("paragraph").filter({ hasText: "Sales call" })).toBeVisible();
 
   await page.getByRole("link", { name: "Pipeline", exact: true }).click();
   await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
