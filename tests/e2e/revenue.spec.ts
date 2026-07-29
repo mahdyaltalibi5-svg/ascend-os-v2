@@ -50,7 +50,7 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await invoiceWorkflow.locator('input[name="totalAmount"]').fill("5000");
   await invoiceWorkflow.locator('input[name="dueDate"]').fill("2026-12-31");
   await invoiceWorkflow.getByRole("button", { name: "Create invoice" }).click();
-  await expect(page.getByText("$5,000")).toBeVisible();
+  await expect(page.getByRole("paragraph").filter({ hasText: "$5,000" }).first()).toBeVisible();
 
   const firstPaymentWorkflow = await openWorkflow(page, "Record payment");
   await firstPaymentWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });
