@@ -43,7 +43,7 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await contractWorkflow.locator('select[name="billingType"]').selectOption("recurring");
   await contractWorkflow.locator('input[name="mrrAmount"]').fill("1000");
   await contractWorkflow.getByRole("button", { name: "Create contract" }).click();
-  await expect(page.getByText("Automation Sprint")).toBeVisible();
+  await expect(page.getByText("Signed contract not invoiced: Automation Sprint")).toBeVisible();
 
   const invoiceWorkflow = await openWorkflow(page, "Add invoice");
   await invoiceWorkflow.locator('select[name="clientId"]').selectOption({ label: clientName });

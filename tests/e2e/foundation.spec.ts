@@ -27,8 +27,11 @@ test("primary foundation happy path", async ({ page }) => {
     .getByRole("button", { name: /Sign out/ })
     .first()
     .click();
+  await page.waitForURL(/\/signin/);
   await expect(page.getByRole("heading", { name: "Sign in to Ascend OS" })).toBeVisible();
 
+  await page.context().clearCookies();
+  await page.goto("/signin");
   await page.getByLabel("Email").fill("sales@ascend.local");
   await page.getByLabel("Password").fill("AscendDev123!");
   await page.getByRole("button", { name: "Sign in" }).click();
