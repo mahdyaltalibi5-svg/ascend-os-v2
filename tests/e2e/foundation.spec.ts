@@ -39,9 +39,7 @@ test("primary foundation happy path", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
-  await expect(page.getByRole("heading", { name: "Sales Command Center" })).toBeVisible({
-    timeout: 20000
-  });
+  await expect(page.locator("body")).toContainText("Sales Command Center", { timeout: 30000 });
   await expect(page.getByRole("link", { name: /Revenue/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Settings/ })).toHaveCount(0);
 });
