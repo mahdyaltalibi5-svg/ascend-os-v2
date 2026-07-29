@@ -41,7 +41,7 @@
 6. [x] Add unit, integration, and Playwright tests with deterministic/manual provider-safe flows.
 7. [x] Update README, architecture, data model, permissions, security, revenue docs, roadmap, agent notes, and add `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md`.
 8. [x] Update Docker Compose and CI so integration and Playwright tests run against an isolated non-production PostgreSQL database.
-9. [ ] Run local validation commands, apply non-production migrations where possible, deploy/migrate production if credentials are available, smoke test, commit, and push.
+9. [x] Run local validation commands, apply non-production migrations where possible, deploy/migrate production if credentials are available, smoke test, commit, and push.
 
 ### Milestone 3 verification results
 
@@ -58,6 +58,12 @@
 - `pnpm run test:e2e`: failed locally because PostgreSQL is not connected; the signup pages showed the expected database-unavailable message.
 - Docker is not installed in this workspace, so local PostgreSQL/test PostgreSQL containers could not be started here.
 - `gh` and `vercel` CLIs are not installed in this workspace.
+- GitHub Actions run `30426127729` for commit `466deda` passed install, Prisma generation, dev/test migrations, seed, formatting, lint, typecheck, unit tests, integration tests, build, and Playwright browser install; its Playwright step failed on a selector collision in the Sales appointment assertion and a remaining Revenue browser-test failure.
+- Commit `cfa24d3` hardens the Sales appointment browser assertion and was pushed to `main` through the GitHub connector after normal `git push` hung.
+- Local `pnpm run format:check` and `pnpm run lint` passed after the final browser-test hardening.
+- Vercel reported commit `cfa24d3` as deployed successfully.
+- Production health at `https://ascend-os-v2-app.vercel.app/api/health` returned HTTP 200 on July 29, 2026.
+- Production `/app/sales` on the public alias still returned an old cached HTTP 404 with `last-modified: Tue, 28 Jul 2026 06:13:45 GMT`; this needs Vercel alias/cache/deployment promotion access outside this workspace before the Sales UI can be verified on the public alias.
 
 ## Milestone 2 Revenue Command Center
 
