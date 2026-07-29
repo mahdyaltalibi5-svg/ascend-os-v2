@@ -29,17 +29,23 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) return null;
 
         const normalizedEmail = normalizeEmail(parsed.data.email);
-        const rate = checkRateLimit(`signin:${normalizedEmail}`, 8, 60_000);
-        if (!rate.ok) return null;
+        const rateLimitKey = `signin:${normalizedEmail}`;
+        const registerFailedAttempt = () => checkRateLimit(rateLimitKey, 8, 60_000);
 
         const user = await prisma.user.findUnique({
           where: { normalizedEmail }
         });
 
-        if (!user) return null;
+        if (!user) {
+          registerFailedAttempt();
+          return null;
+        }
 
         const validPassword = await verifyPassword(parsed.data.password, user.passwordHash);
-        if (!validPassword) return null;
+        if (!validPassword) {
+          registerFailedAttempt();
+          return null;
+        }
 
         await writeAuditEvent({
           actorUserId: user.id,
