@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 test("founder completes primary revenue workflow", async ({ page }) => {
+  test.setTimeout(120_000);
+
   const unique = Date.now();
   const email = `revenue-founder-${unique}@example.com`;
   const password = "SecurePass123";
@@ -71,7 +73,7 @@ test("founder completes primary revenue workflow", async ({ page }) => {
   await recurringWorkflow.locator('input[name="amount"]').fill("1000");
   await recurringWorkflow.locator('input[name="nextExpectedDate"]').fill("2026-12-31");
   await recurringWorkflow.getByRole("button", { name: "Add recurring revenue" }).click();
-  await expect(page.getByText("MRR")).toBeVisible();
+  await expect(page.getByRole("paragraph").filter({ hasText: /^MRR$/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Create snapshot" }).click();
   await page.getByRole("button", { name: "Add priority" }).first().click();

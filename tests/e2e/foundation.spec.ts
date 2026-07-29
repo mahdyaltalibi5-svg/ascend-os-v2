@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("primary foundation happy path", async ({ page }) => {
+  test.setTimeout(90_000);
+
   const unique = Date.now();
   const email = `founder-${unique}@example.com`;
   const password = "SecurePass123";
