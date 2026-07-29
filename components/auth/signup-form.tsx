@@ -51,8 +51,7 @@ export function SignupForm() {
     });
 
     if (signInResult?.ok) {
-      router.push("/app/onboarding");
-      router.refresh();
+      window.location.assign("/app/onboarding");
       return;
     }
 
