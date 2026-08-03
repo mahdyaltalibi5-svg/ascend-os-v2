@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   Clock3,
+  SearchCheck,
   Megaphone,
   PhoneCall,
   RadioTower,
@@ -79,6 +80,13 @@ export const appNavigation: NavItem[] = [
     icon: ShieldCheck,
     permissions: ["analytics.company"],
     description: "Company-wide calling, queue, and team controls."
+  },
+  {
+    label: "Scraper",
+    href: "/app/scraper",
+    icon: SearchCheck,
+    permissions: ["scraper.view"],
+    description: "Verified Utah HVAC and plumbing discovery."
   },
   {
     label: "Revenue",

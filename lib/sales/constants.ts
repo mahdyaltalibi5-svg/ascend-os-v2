@@ -38,6 +38,60 @@ export const prospectStatuses = [
 
 export const crmTrades = ["HVAC", "Plumbing"] as const;
 
+export const scraperDiscoveryStatuses = [
+  "discovered",
+  "needs_manual_review",
+  "verified",
+  "call_ready",
+  "approved",
+  "rejected",
+  "duplicate",
+  "suppressed",
+  "source_mismatch",
+  "not_target_trade",
+  "outside_utah"
+] as const;
+
+export const scraperPhoneVerificationStatuses = [
+  "official_website_verified",
+  "official_google_profile_verified",
+  "source_mismatch",
+  "missing_phone",
+  "no_website",
+  "website_blocked",
+  "unable_to_verify"
+] as const;
+
+export const scraperOwnerConfidenceLevels = [
+  "verified_owner",
+  "owner_signal",
+  "company_line_only",
+  "unverified"
+] as const;
+
+export const scraperUtahCities = [
+  "Salt Lake City",
+  "West Valley City",
+  "West Jordan",
+  "Provo",
+  "Orem",
+  "Sandy",
+  "Ogden",
+  "St. George",
+  "Layton",
+  "Lehi",
+  "South Jordan",
+  "Logan",
+  "Murray",
+  "Draper",
+  "Bountiful"
+] as const;
+
+export const scraperTradeSearchTerms = {
+  HVAC: ["hvac contractor", "air conditioning repair", "heating and cooling company"],
+  Plumbing: ["plumber", "plumbing contractor", "emergency plumber"]
+} as const satisfies Record<(typeof crmTrades)[number], readonly string[]>;
+
 export const phoneTypes = [
   "direct_owner",
   "owner_operated_main_line",
@@ -202,6 +256,7 @@ export const jobStatuses = ["queued", "running", "completed", "failed", "cancell
 
 export const jobTypes = [
   "lead_campaign_search",
+  "lead_scraper_discovery",
   "place_details_enrichment",
   "website_analysis",
   "lead_scoring",
@@ -289,6 +344,24 @@ export const salesLabelByValue: Record<string, string> = {
   bad_fit: "Bad fit",
   duplicate: "Duplicate",
   do_not_contact: "Do not contact",
+  discovered: "Discovered",
+  verified: "Verified",
+  call_ready: "Call ready",
+  approved: "Approved",
+  rejected: "Rejected",
+  suppressed: "Suppressed",
+  source_mismatch: "Source mismatch",
+  not_target_trade: "Not target trade",
+  outside_utah: "Outside Utah",
+  official_website_verified: "Official website verified",
+  official_google_profile_verified: "Official Google profile verified",
+  missing_phone: "Missing phone",
+  no_website: "No website",
+  website_blocked: "Website blocked",
+  unable_to_verify: "Unable to verify",
+  verified_owner: "Verified owner",
+  owner_signal: "Owner signal",
+  company_line_only: "Company line only",
   direct_owner: "Owner Direct",
   owner_operated_main_line: "Owner-Operated Main Line",
   official_company_line: "Official Company Line",

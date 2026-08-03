@@ -30,7 +30,9 @@ Milestone 2 adds `/app/call-desk`, `/app/callbacks`, `/app/calendar`, `/app/foun
 
 The queue is deterministic and server-side. It prioritizes exact due callbacks, overdue callbacks, interested leads, prior owner answers, full pitches, Owner Reach Score, best calling windows, lead/marketing score, fewest attempts, and oldest untouched leads. It excludes suppressed records, wrong numbers, do-not-call records, disqualified/closed leads, another user's assignments, active locks, future callbacks, unverified phones, non-call-ready leads, and active policy hours that are closed.
 
-Google Places is optional and server-only for stored campaign jobs, but scraping is not part of these milestones. Twilio Voice, automated cold SMS, Google Calendar sync, predictive dialing, call recording, and multi-line dialing are intentionally not configured or integrated yet. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md` for future integration boundaries.
+Milestone 3 adds `/app/scraper`, a Founder-controlled Utah HVAC/plumbing discovery and verification engine. It uses Google Places as the live discovery source when `GOOGLE_PLACES_API_KEY` is configured, stores scraper review records, analyzes official websites with SSRF protections, verifies phones only from official website or Google Business Profile evidence, stores owner evidence without inventing Owner Direct numbers, scores owner reach, marketing need, and data confidence separately, blocks suppressed or duplicate numbers from approval, and requires human approval before a discovery enters the call queue.
+
+Twilio Voice, automated cold SMS, Google Calendar sync, predictive dialing, call recording, multi-line dialing, electricians, and production custom-domain work are intentionally not configured or integrated. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md` for integration boundaries.
 
 ## Quick Start: Docker PostgreSQL
 
@@ -104,7 +106,7 @@ SALES_WORKER_SECRET=
 CRON_SECRET=
 ```
 
-Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. `GOOGLE_PLACES_API_KEY`, `SALES_WORKER_SECRET`, and `CRON_SECRET` can remain empty for Milestone 2 unless you intentionally run stored provider jobs later. Do not add Twilio, SMS, scraping, or Google Calendar credentials for this milestone. After connecting the database, run migrations from a trusted machine or CI:
+Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. Leave `GOOGLE_PLACES_API_KEY` empty to disable live scraper jobs honestly; set it only when Mahdy is ready to run paid Google Places discovery. Set `SALES_WORKER_SECRET` or `CRON_SECRET` before calling worker endpoints. Do not add Twilio, automated SMS, Google Calendar, call recording, predictive dialing, or custom-domain credentials for this milestone. After connecting the database, run migrations from a trusted machine or CI:
 
 ```bash
 pnpm exec prisma migrate deploy

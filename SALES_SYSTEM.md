@@ -1,7 +1,8 @@
 # Ascend OS Sales System
 
-Milestone 1 added the CRM foundation. Milestone 2 adds the owner-first call desk,
-callback engine, role dashboards, and mobile PWA foundation.
+Milestone 1 added the CRM foundation. Milestone 2 added the owner-first call desk,
+callback engine, role dashboards, and mobile PWA foundation. Milestone 3 adds the
+Founder-controlled Utah HVAC/plumbing scraper and verification engine.
 
 ## Capabilities
 
@@ -29,6 +30,7 @@ callback engine, role dashboards, and mobile PWA foundation.
 - Founder dashboard at `/app/founder` for company-wide calling metrics, team comparison, lead operations, attention items, stale lock release, and Owner Reach Score review.
 - Sales dashboard at `/app/sales-dashboard` for personal calling metrics, due callbacks, appointments, queue counts, and install/push foundations.
 - Explainable Owner Reach Score stored on leads and reviewable by Founder permissions.
+- Founder scraper at `/app/scraper` for Google Places discovery, official website verification, owner evidence, marketing weakness analysis, separate owner/need/confidence scoring, human review, and approved lead creation.
 
 ## Honest Limits
 
@@ -36,10 +38,20 @@ callback engine, role dashboards, and mobile PWA foundation.
 - Calendar sync is not implemented. Appointment records store future external calendar IDs.
 - Browser and PWA surfaces do not claim they can silently place native cellular calls.
 - Push delivery is not configured. Subscription storage and opt-in UI exist for a later provider.
-- Predictive dialing, call recording, Twilio Voice, automated cold SMS, scraping, and multi-line parallel dialing are out of scope.
+- Predictive dialing, call recording, Twilio Voice, automated cold SMS, electricians, production custom domains, and multi-line parallel dialing are out of scope.
 - Google Places campaigns require `GOOGLE_PLACES_API_KEY`; without it, campaigns are stored but launch into a clear failed/disabled state.
+- Scraper jobs require `GOOGLE_PLACES_API_KEY`; without it, the scraper dashboard stays visible to Founder users but live jobs are disabled.
 - Website research does not execute arbitrary JavaScript and does not crawl aggressively.
 - AI summaries are not required for lead generation.
+
+## Scraper Approval Rules
+
+- Approved trades are only `HVAC` and `Plumbing`.
+- Approved geography is Utah.
+- Call-ready approval requires official company website or official Google Business Profile phone evidence.
+- Source mismatches, duplicate normalized phones, suppressed numbers, off-scope trades, and non-Utah records stay out of the call queue.
+- Owner names are stored only with evidence. The scraper never marks a number as `Owner Direct`.
+- Approved and rejected review records are preserved even when later jobs rediscover the same company.
 
 ## Queue Ranking
 

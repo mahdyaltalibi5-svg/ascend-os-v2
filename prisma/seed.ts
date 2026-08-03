@@ -397,6 +397,28 @@ async function seedSalesDefaults(organizationId: string) {
       });
     }
   }
+
+  await prisma.scraperScoringPolicy.upsert({
+    where: { id: `default-scraper-policy-${organizationId}` },
+    update: {
+      name: "Default scraper scoring",
+      ownerReachWeight: 40,
+      marketingNeedWeight: 40,
+      dataConfidenceWeight: 20,
+      minimumConfidence: 70,
+      active: true
+    },
+    create: {
+      id: `default-scraper-policy-${organizationId}`,
+      organizationId,
+      name: "Default scraper scoring",
+      ownerReachWeight: 40,
+      marketingNeedWeight: 40,
+      dataConfidenceWeight: 20,
+      minimumConfidence: 70,
+      active: true
+    }
+  });
 }
 
 main()

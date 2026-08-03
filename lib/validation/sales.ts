@@ -17,6 +17,8 @@ import {
   phoneVerificationMethods,
   prospectPriorities,
   prospectStatuses,
+  scraperTradeSearchTerms,
+  scraperUtahCities,
   salesGoalMetrics,
   suppressionReasons
 } from "@/lib/sales/constants";
@@ -63,6 +65,48 @@ export const leadCampaignSchema = z.object({
   status: z.enum(campaignStatuses).default("draft"),
   sourceProvider: z.string().trim().max(80).default("google_places")
 });
+
+const formArray = (value: unknown) => (Array.isArray(value) ? value : value ? [value] : []);
+
+export const scraperJobSchema = z.object({
+  sourceProvider: z.enum(["google_places"]).default("google_places"),
+  cities: z.preprocess(
+    formArray,
+    z.array(z.enum(scraperUtahCities)).min(1).max(scraperUtahCities.length)
+  ),
+  trades: z.preprocess(formArray, z.array(z.enum(crmTrades)).min(1).max(crmTrades.length)),
+  limitPerSearch: z.coerce.number().int().min(1).max(10).default(5)
+});
+
+export const scraperReviewSchema = z.object({
+  discoveryId: z.string().min(1),
+  action: z.enum(["approve", "reject"]),
+  assignedUserId: z.string().optional().or(z.literal("")),
+  rejectionReason: optionalText,
+  businessName: optionalShort,
+  ownerName: optionalShort,
+  phone: optionalShort,
+  websiteUrl: optionalShort,
+  googleBusinessProfileUrl: optionalShort,
+  notes: optionalText
+});
+
+export const scraperPolicySchema = z
+  .object({
+    ownerReachWeight: z.coerce.number().int().min(0).max(100),
+    marketingNeedWeight: z.coerce.number().int().min(0).max(100),
+    dataConfidenceWeight: z.coerce.number().int().min(0).max(100),
+    minimumConfidence: z.coerce.number().int().min(40).max(95)
+  })
+  .refine(
+    (value) =>
+      value.ownerReachWeight + value.marketingNeedWeight + value.dataConfidenceWeight === 100,
+    "Scoring weights must add up to 100."
+  );
+
+export function scraperDefaultSearchTerms(trade: (typeof crmTrades)[number]) {
+  return scraperTradeSearchTerms[trade].join(", ");
+}
 
 export const leadBusinessSchema = z.object({
   businessName: z.string().trim().min(2).max(180),

@@ -1,7 +1,13 @@
 import dns from "node:dns/promises";
 import net from "node:net";
 
-const blockedHosts = new Set(["localhost", "metadata.google.internal"]);
+const blockedHosts = new Set([
+  "localhost",
+  "metadata.google.internal",
+  "169.254.169.254",
+  "metadata",
+  "kubernetes.default.svc"
+]);
 
 export function isPrivateIp(address: string) {
   if (net.isIPv4(address)) {
@@ -29,8 +35,9 @@ export function isPrivateIp(address: string) {
 
 export async function assertSafeHttpUrl(rawUrl: string) {
   const url = parseHttpUrl(rawUrl);
+  if (url.username || url.password) throw new Error("URL_CREDENTIALS_BLOCKED");
   const host = url.hostname.toLowerCase();
-  if (blockedHosts.has(host) || host.endsWith(".local")) {
+  if (blockedHosts.has(host) || host.endsWith(".local") || host.endsWith(".internal")) {
     throw new Error("UNSAFE_HOST");
   }
 
@@ -60,21 +67,34 @@ export function parseHttpUrl(rawUrl: string) {
 
 export async function fetchWithSafety(
   rawUrl: string,
-  options?: { maxBytes?: number; timeoutMs?: number }
+  options?: { maxBytes?: number; timeoutMs?: number; maxRedirects?: number; userAgent?: string }
 ) {
-  const url = await assertSafeHttpUrl(rawUrl);
+  let url = await assertSafeHttpUrl(rawUrl);
   const maxBytes = options?.maxBytes ?? 400_000;
+  const maxRedirects = options?.maxRedirects ?? 3;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 7000);
 
   try {
-    const response = await fetch(url, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "user-agent": "AscendOSLeadResearch/1.0 (+https://ascend-os-v2-app.vercel.app)"
-      }
-    });
+    let response: Response | null = null;
+    for (let redirects = 0; redirects <= maxRedirects; redirects += 1) {
+      response = await fetch(url, {
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          "user-agent":
+            options?.userAgent ?? "AscendOSLeadResearch/1.0 (+https://ascend-os-v2-app.vercel.app)"
+        }
+      });
+
+      if (![301, 302, 303, 307, 308].includes(response.status)) break;
+      const location = response.headers.get("location");
+      if (!location) break;
+      url = await assertSafeHttpUrl(new URL(location, url).toString());
+      if (redirects === maxRedirects) throw new Error("TOO_MANY_REDIRECTS");
+    }
+
+    if (!response) throw new Error("EMPTY_RESPONSE");
 
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("text/html")) {

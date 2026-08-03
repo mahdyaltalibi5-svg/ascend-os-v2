@@ -40,9 +40,13 @@ Operational records prefer archive or soft-delete timestamps over hard deletion.
 
 The service worker avoids caching `/api/*` and `/app/*` authenticated tenant data. Review this before adding offline features.
 
-## Lead Research Security
+## Lead Research And Scraper Security
 
-Website analysis validates HTTP(S) URLs, blocks private networks and localhost, checks DNS resolution, enforces strict timeouts, limits response size, validates HTML content type, and does not execute arbitrary JavaScript. Provider keys and worker secrets are server-only. CSV exports escape formula-leading cells. Suppression records are checked before outreach attempts.
+Website analysis validates HTTP(S) URLs, blocks private networks and localhost, blocks link-local metadata targets, rejects URL credentials, blocks `.local` and `.internal` hosts, checks DNS resolution, manually revalidates redirects, enforces strict timeouts, limits response size, validates HTML content type, and does not execute arbitrary JavaScript. Provider keys and worker secrets are server-only. CSV exports escape formula-leading cells. Suppression records are checked before outreach attempts and before scraper approval.
+
+The scraper is Founder-controlled by default. Salesperson roles do not receive scraper permissions. Live discovery requires a server-side `GOOGLE_PLACES_API_KEY`; missing keys disable jobs rather than creating fake production data. Scraper output enters `ScraperLeadDiscovery` first and only becomes a `LeadBusiness` after human approval and hard validation.
+
+Call-ready scraper approval requires Utah location, approved trade, normalized phone, no permanent phone suppression, no duplicate warnings, and official phone verification from the company website or Google Business Profile. Owner evidence can improve scores, but the scraper does not mark numbers as `direct_owner`.
 
 ## Current Limitations
 
@@ -52,7 +56,7 @@ Website analysis validates HTTP(S) URLs, blocks private networks and localhost, 
 - Playwright depends on a running local database and seeded data.
 - Database-backed integration tests require `TEST_DATABASE_URL` and must not target production.
 - Deterministic recommendations are not external AI output.
-- Google Places lead generation is disabled honestly when `GOOGLE_PLACES_API_KEY` is absent.
+- Google Places discovery is disabled honestly when `GOOGLE_PLACES_API_KEY` is absent.
 
 ## Production-Hardening Checklist
 

@@ -68,6 +68,7 @@ model User {
   leadLocks                 LeadLock[]
   pushSubscriptions         PushSubscription[]
   ownerReachScoreReviews    OwnerReachScoreReview[]
+  reviewedScraperLeads      ScraperLeadDiscovery[]   @relation("ScraperLeadReviewer")
 }
 
 model Account {
@@ -117,58 +118,62 @@ model VerificationToken {
 }
 
 model Organization {
-  id                        String                     @id @default(cuid())
-  name                      String
-  slug                      String                     @unique
-  website                   String?
-  timezone                  String
-  createdById               String?
-  createdAt                 DateTime                   @default(now())
-  updatedAt                 DateTime                   @updatedAt
-  createdBy                 User?                      @relation("OrganizationCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  memberships               OrganizationMembership[]
-  roles                     Role[]
-  invitations               Invitation[]
-  auditEvents               AuditEvent[]
-  notificationPreferences   NotificationPreference[]
-  branding                  OrganizationBranding?
-  personalPriorities        PersonalPriority[]
-  operatingNotes            OperatingNote[]
-  focusBlocks               FocusBlock[]
-  dailyPlans                DailyPlan[]
-  goals                     Goal[]
-  inAppNotifications        InAppNotification[]
-  clients                   Client[]
-  serviceOfferings          ServiceOffering[]
-  revenueContracts          RevenueContract[]
-  invoices                  Invoice[]
-  payments                  Payment[]
-  recurringRevenueSchedules RecurringRevenueSchedule[]
-  revenueGoals              RevenueGoal[]
-  revenueForecastSnapshots  RevenueForecastSnapshot[]
-  revenueAdjustments        RevenueAdjustment[]
-  leadCampaigns             LeadCampaign[]
-  leadBusinesses            LeadBusiness[]
-  leadContacts              LeadContact[]
-  leadCampaignMemberships   LeadCampaignMembership[]
-  leadAnalyses              LeadAnalysis[]
-  prospects                 Prospect[]
-  outreachAttempts          OutreachAttempt[]
-  followUps                 FollowUp[]
-  appointments              Appointment[]
-  pipelines                 Pipeline[]
-  pipelineStages            PipelineStage[]
-  opportunities             Opportunity[]
-  salesGoals                SalesGoal[]
-  contactSuppressions       ContactSuppression[]
-  backgroundJobs            BackgroundJob[]
-  callAttempts              CallAttempt[]
-  pendingCallSessions       PendingCallSession[]
-  salesCallbacks            SalesCallback[]
-  leadLocks                 LeadLock[]
-  callingPolicies           CallingPolicy[]
-  pushSubscriptions         PushSubscription[]
-  ownerReachScoreReviews    OwnerReachScoreReview[]
+  id                         String                     @id @default(cuid())
+  name                       String
+  slug                       String                     @unique
+  website                    String?
+  timezone                   String
+  createdById                String?
+  createdAt                  DateTime                   @default(now())
+  updatedAt                  DateTime                   @updatedAt
+  createdBy                  User?                      @relation("OrganizationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  memberships                OrganizationMembership[]
+  roles                      Role[]
+  invitations                Invitation[]
+  auditEvents                AuditEvent[]
+  notificationPreferences    NotificationPreference[]
+  branding                   OrganizationBranding?
+  personalPriorities         PersonalPriority[]
+  operatingNotes             OperatingNote[]
+  focusBlocks                FocusBlock[]
+  dailyPlans                 DailyPlan[]
+  goals                      Goal[]
+  inAppNotifications         InAppNotification[]
+  clients                    Client[]
+  serviceOfferings           ServiceOffering[]
+  revenueContracts           RevenueContract[]
+  invoices                   Invoice[]
+  payments                   Payment[]
+  recurringRevenueSchedules  RecurringRevenueSchedule[]
+  revenueGoals               RevenueGoal[]
+  revenueForecastSnapshots   RevenueForecastSnapshot[]
+  revenueAdjustments         RevenueAdjustment[]
+  leadCampaigns              LeadCampaign[]
+  leadBusinesses             LeadBusiness[]
+  leadContacts               LeadContact[]
+  leadCampaignMemberships    LeadCampaignMembership[]
+  leadAnalyses               LeadAnalysis[]
+  prospects                  Prospect[]
+  outreachAttempts           OutreachAttempt[]
+  followUps                  FollowUp[]
+  appointments               Appointment[]
+  pipelines                  Pipeline[]
+  pipelineStages             PipelineStage[]
+  opportunities              Opportunity[]
+  salesGoals                 SalesGoal[]
+  contactSuppressions        ContactSuppression[]
+  backgroundJobs             BackgroundJob[]
+  callAttempts               CallAttempt[]
+  pendingCallSessions        PendingCallSession[]
+  salesCallbacks             SalesCallback[]
+  leadLocks                  LeadLock[]
+  callingPolicies            CallingPolicy[]
+  pushSubscriptions          PushSubscription[]
+  ownerReachScoreReviews     OwnerReachScoreReview[]
+  scraperLeadDiscoveries     ScraperLeadDiscovery[]
+  scraperMarketingWeaknesses ScraperMarketingWeakness[]
+  scraperScoringPolicies     ScraperScoringPolicy[]
+  scraperDomainRateLimits    ScraperDomainRateLimit[]
 }
 
 model OrganizationMembership {
@@ -781,6 +786,7 @@ model LeadCampaign {
   memberships        LeadCampaignMembership[]
   prospects          Prospect[]
   jobs               BackgroundJob[]
+  scraperDiscoveries ScraperLeadDiscovery[]
 
   @@index([organizationId, status])
   @@index([organizationId, sourceProvider])
@@ -857,6 +863,7 @@ model LeadBusiness {
   callbacks                 SalesCallback[]
   locks                     LeadLock[]
   ownerReachScoreReviews    OwnerReachScoreReview[]
+  scraperDiscoveries        ScraperLeadDiscovery[]   @relation("ApprovedScraperLead")
 
   @@unique([organizationId, googlePlaceId])
   @@unique([organizationId, normalizedPhone])
@@ -1208,30 +1215,147 @@ model ContactSuppression {
 }
 
 model BackgroundJob {
-  id              String        @id @default(cuid())
-  organizationId  String
-  campaignId      String?
-  type            String
-  status          String        @default("queued")
-  input           Json
-  progressCurrent Int           @default(0)
-  progressTotal   Int           @default(0)
-  resultSummary   Json?
-  errorMessage    String?
-  attemptCount    Int           @default(0)
-  maxAttempts     Int           @default(3)
-  lockedAt        DateTime?
-  startedAt       DateTime?
-  completedAt     DateTime?
-  heartbeatAt     DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  campaign        LeadCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  id                 String                 @id @default(cuid())
+  organizationId     String
+  campaignId         String?
+  type               String
+  status             String                 @default("queued")
+  input              Json
+  progressCurrent    Int                    @default(0)
+  progressTotal      Int                    @default(0)
+  resultSummary      Json?
+  errorMessage       String?
+  attemptCount       Int                    @default(0)
+  maxAttempts        Int                    @default(3)
+  lockedAt           DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  heartbeatAt        DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  organization       Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign           LeadCampaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  scraperDiscoveries ScraperLeadDiscovery[]
 
   @@index([organizationId, status, type])
   @@index([organizationId, campaignId])
   @@index([status, lockedAt])
+}
+
+model ScraperLeadDiscovery {
+  id                       String                     @id @default(cuid())
+  organizationId           String
+  campaignId               String?
+  backgroundJobId          String?
+  sourceProvider           String
+  sourceQuery              String?
+  sourceRecordId           String?
+  googlePlaceId            String?
+  googleMapsUrl            String?
+  businessName             String
+  normalizedBusinessName   String
+  trade                    String?
+  phone                    String?
+  normalizedPhone          String?
+  websiteUrl               String?
+  normalizedDomain         String?
+  googleBusinessProfileUrl String?
+  address                  String?
+  city                     String?
+  state                    String?
+  postalCode               String?
+  country                  String                     @default("United States")
+  rating                   Decimal?                   @db.Decimal(3, 2)
+  reviewCount              Int?
+  businessStatus           String?
+  status                   String                     @default("discovered")
+  phoneVerificationStatus  String                     @default("unable_to_verify")
+  phoneVerificationSource  String?
+  phoneVerificationDate    DateTime?
+  ownerName                String?
+  ownerVerificationSource  String?
+  ownerVerificationMethod  String?
+  ownerConfidence          String                     @default("unverified")
+  ownerVerificationDate    DateTime?
+  ownerReachScore          Int                        @default(0)
+  marketingNeedScore       Int                        @default(0)
+  dataConfidenceScore      Int                        @default(0)
+  callPriorityScore        Int                        @default(0)
+  ownerReachReasons        String[]                   @default([])
+  marketingNeedReasons     String[]                   @default([])
+  dataConfidenceReasons    String[]                   @default([])
+  duplicateWarnings        String[]                   @default([])
+  sourceUrls               String[]                   @default([])
+  rejectionReason          String?
+  approvedLeadBusinessId   String?
+  assignedUserId           String?
+  reviewedById             String?
+  reviewedAt               DateTime?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  organization             Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign                 LeadCampaign?              @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  backgroundJob            BackgroundJob?             @relation(fields: [backgroundJobId], references: [id], onDelete: SetNull)
+  approvedLeadBusiness     LeadBusiness?              @relation("ApprovedScraperLead", fields: [approvedLeadBusinessId], references: [id], onDelete: SetNull)
+  reviewedBy               User?                      @relation("ScraperLeadReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  weaknesses               ScraperMarketingWeakness[]
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, campaignId])
+  @@index([organizationId, backgroundJobId])
+  @@index([organizationId, normalizedPhone])
+  @@index([organizationId, normalizedDomain])
+  @@index([organizationId, normalizedBusinessName])
+  @@index([organizationId, googlePlaceId])
+  @@index([organizationId, callPriorityScore])
+}
+
+model ScraperMarketingWeakness {
+  id             String               @id @default(cuid())
+  organizationId String
+  discoveryId    String
+  signal         String
+  evidence       String
+  sourceUrl      String?
+  severity       String
+  detectedAt     DateTime             @default(now())
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  discovery      ScraperLeadDiscovery @relation(fields: [discoveryId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, discoveryId])
+  @@index([organizationId, signal])
+  @@index([organizationId, severity])
+}
+
+model ScraperScoringPolicy {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  name                 String       @default("Default scraper scoring")
+  ownerReachWeight     Int          @default(40)
+  marketingNeedWeight  Int          @default(40)
+  dataConfidenceWeight Int          @default(20)
+  minimumConfidence    Int          @default(70)
+  active               Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, active])
+}
+
+model ScraperDomainRateLimit {
+  id             String       @id @default(cuid())
+  organizationId String
+  domain         String
+  lastFetchedAt  DateTime?
+  fetchCount     Int          @default(0)
+  lastStatus     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, domain])
+  @@index([organizationId, lastFetchedAt])
 }
 
 model CallAttempt {
