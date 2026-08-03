@@ -186,15 +186,21 @@ async function main() {
     create: { membershipId: salespersonMembership.id, roleId: salespersonRole.id }
   });
 
-  for (const membership of [mahdyMembership, loganMembership]) {
-    await prisma.membershipRole.upsert({
-      where: {
-        membershipId_roleId: { membershipId: membership.id, roleId: salespersonRole.id }
-      },
-      update: {},
-      create: { membershipId: membership.id, roleId: salespersonRole.id }
-    });
-  }
+  await prisma.membershipRole.upsert({
+    where: {
+      membershipId_roleId: { membershipId: mahdyMembership.id, roleId: founderRole.id }
+    },
+    update: {},
+    create: { membershipId: mahdyMembership.id, roleId: founderRole.id }
+  });
+
+  await prisma.membershipRole.upsert({
+    where: {
+      membershipId_roleId: { membershipId: loganMembership.id, roleId: salespersonRole.id }
+    },
+    update: {},
+    create: { membershipId: loganMembership.id, roleId: salespersonRole.id }
+  });
 
   for (const user of [founder, salesperson, mahdy, logan]) {
     await prisma.notificationPreference.upsert({
@@ -285,6 +291,34 @@ async function seedServiceOfferings(organizationId: string) {
 }
 
 async function seedSalesDefaults(organizationId: string) {
+  await prisma.callingPolicy.upsert({
+    where: { id: `default-policy-${organizationId}` },
+    update: {
+      name: "Default calling policy",
+      timezone: "America/Denver",
+      weekdayStart: "00:00",
+      weekdayEnd: "23:59",
+      saturdayStart: "00:00",
+      saturdayEnd: "23:59",
+      sundayStart: "00:00",
+      sundayEnd: "23:59",
+      active: true
+    },
+    create: {
+      id: `default-policy-${organizationId}`,
+      organizationId,
+      name: "Default calling policy",
+      timezone: "America/Denver",
+      weekdayStart: "00:00",
+      weekdayEnd: "23:59",
+      saturdayStart: "00:00",
+      saturdayEnd: "23:59",
+      sundayStart: "00:00",
+      sundayEnd: "23:59",
+      active: true
+    }
+  });
+
   const pipeline = await prisma.pipeline.upsert({
     where: { organizationId_name: { organizationId, name: "Ascend Sales Pipeline" } },
     update: {

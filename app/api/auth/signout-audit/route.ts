@@ -15,7 +15,9 @@ async function handleSignOut(request: Request) {
     });
   }
 
-  const response = NextResponse.redirect(new URL("/signin", request.url), { status: 303 });
+  const response = NextResponse.redirect(new URL("/signin?clearLocalState=1", request.url), {
+    status: 303
+  });
   for (const cookieName of [
     "next-auth.session-token",
     "__Secure-next-auth.session-token",

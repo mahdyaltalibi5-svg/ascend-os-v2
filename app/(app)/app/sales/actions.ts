@@ -25,6 +25,7 @@ import {
   prospectStatusAfterOutcome,
   weightedValue
 } from "@/lib/sales/operations";
+import { ownerReachSignals } from "@/lib/sales/call-desk";
 import {
   appointmentSchema,
   followUpSchema,
@@ -248,6 +249,14 @@ export async function updateLeadBusinessAction(formData: FormData) {
   if (parsed.phoneType === "direct_owner" && !parsed.ownerVerificationSource) {
     throw new Error("OWNER_DIRECT_REQUIRES_EVIDENCE");
   }
+  const ownerReach = ownerReachSignals({
+    phoneType: parsed.phoneType,
+    ownerName: parsed.ownerName || null,
+    ownerVerificationSource: parsed.ownerVerificationSource || null,
+    phoneVerificationSource: parsed.phoneVerificationSource || null,
+    sourceUrls: normalizeSourceUrls(parsed.sourceUrls),
+    callAttempts: []
+  });
   const updated = await prisma.leadBusiness.update({
     where: { id: existing.id },
     data: {
@@ -282,6 +291,8 @@ export async function updateLeadBusinessAction(formData: FormData) {
         websiteUrl: parsed.websiteUrl,
         googleBusinessProfileUrl: parsed.googleBusinessProfileUrl
       }),
+      ownerReachScore: ownerReach.score,
+      ownerReachScoreReasons: ownerReach.reasons,
       assignedUserId: parsed.assignedUserId || null,
       nextFollowUpAt: parsed.nextFollowUpAt ? new Date(parsed.nextFollowUpAt) : null,
       doNotCall: parsed.doNotCall,
@@ -1178,6 +1189,15 @@ async function upsertLeadBusiness(
     sourceUrls: normalizeSourceUrls(input.sourceUrls),
     notes: input.notes || null
   };
+  const ownerReach = ownerReachSignals({
+    phoneType: input.phoneType,
+    ownerName: input.ownerName,
+    ownerVerificationSource: input.ownerVerificationSource,
+    phoneVerificationSource,
+    sourceUrls: data.sourceUrls,
+    ownerOperatedLikelihood: null,
+    callAttempts: []
+  });
   if (existing) {
     if (existing.normalizedPhone && existing.normalizedPhone === normalized.normalizedPhone) {
       throw new Error("DUPLICATE_NORMALIZED_PHONE");
@@ -1202,6 +1222,8 @@ async function upsertLeadBusiness(
           websiteUrl: input.websiteUrl,
           googleBusinessProfileUrl: input.googleBusinessProfileUrl || input.googleMapsUrl
         }),
+        ownerReachScore: ownerReach.score,
+        ownerReachScoreReasons: ownerReach.reasons,
         assignedUserId: input.assignedUserId || null,
         nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
         doNotCall: Boolean(input.doNotCall),
@@ -1231,6 +1253,8 @@ async function upsertLeadBusiness(
         websiteUrl: input.websiteUrl,
         googleBusinessProfileUrl: input.googleBusinessProfileUrl || input.googleMapsUrl
       }),
+      ownerReachScore: ownerReach.score,
+      ownerReachScoreReasons: ownerReach.reasons,
       assignedUserId: input.assignedUserId || null,
       nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
       doNotCall: Boolean(input.doNotCall),

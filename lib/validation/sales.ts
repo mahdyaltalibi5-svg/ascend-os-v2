@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import {
   appointmentStatuses,
+  callbackStatuses,
+  callOutcomes,
   campaignStatuses,
+  contactTypes,
   crmTrades,
   followUpTypes,
   leadClassifications,
@@ -149,6 +152,78 @@ export const appointmentSchema = z.object({
   meetingUrl: optionalShort,
   location: optionalShort,
   notes: optionalText
+});
+
+export const nextLeadSchema = z.object({
+  sessionKey: z.string().trim().min(8).max(120)
+});
+
+export const pendingCallSessionSchema = z.object({
+  leadBusinessId: z.string().min(1),
+  sessionKey: z.string().trim().min(8).max(120)
+});
+
+export const cancelPendingCallSchema = z.object({
+  pendingSessionId: z.string().min(1),
+  reason: optionalShort
+});
+
+export const callOutcomeSchema = z.object({
+  leadBusinessId: z.string().min(1),
+  sessionKey: z.string().trim().min(8).max(120),
+  pendingSessionId: z.string().optional().or(z.literal("")),
+  lockId: z.string().optional().or(z.literal("")),
+  idempotencyKey: z.string().trim().min(8).max(120),
+  startedAt: dateTimeString.optional().or(z.literal("")),
+  endedAt: dateTimeString.optional().or(z.literal("")),
+  durationSeconds: z.coerce.number().int().min(0).max(14400).optional().or(z.literal("")),
+  outcome: z.enum(callOutcomes),
+  contactType: z.enum(contactTypes).default("unknown"),
+  notes: optionalText,
+  callbackAt: dateTimeString.optional().or(z.literal("")),
+  callbackReason: optionalShort,
+  appointmentStartAt: dateTimeString.optional().or(z.literal("")),
+  appointmentEndAt: dateTimeString.optional().or(z.literal("")),
+  appointmentMeetingType: z.enum(meetingTypes).optional().or(z.literal("")),
+  appointmentNotes: optionalText,
+  assignedCloserId: z.string().optional().or(z.literal(""))
+});
+
+export const callbackSchema = z.object({
+  leadBusinessId: z.string().min(1),
+  assignedCallerId: z.string().min(1),
+  scheduledAt: dateTimeString,
+  timezone: z.string().trim().min(2).max(80),
+  reason: z.string().trim().min(2).max(180),
+  notes: optionalText
+});
+
+export const callbackUpdateSchema = z.object({
+  callbackId: z.string().min(1),
+  scheduledAt: dateTimeString.optional().or(z.literal("")),
+  status: z.enum(callbackStatuses).optional(),
+  notes: optionalText,
+  reason: optionalShort
+});
+
+export const leadLockSchema = z.object({
+  lockId: z.string().min(1),
+  reason: optionalShort
+});
+
+export const ownerReachReviewSchema = z.object({
+  leadBusinessId: z.string().min(1),
+  ownerReachScore: z.coerce.number().int().min(0).max(100),
+  ownerReachScoreReasons: optionalText,
+  reason: z.string().trim().min(2).max(500)
+});
+
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.string().trim().url(),
+  p256dh: optionalShort,
+  auth: optionalShort,
+  userAgent: optionalShort,
+  enabled: z.coerce.boolean().default(true)
 });
 
 export const opportunitySchema = z.object({

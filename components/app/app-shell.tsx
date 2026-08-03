@@ -96,7 +96,7 @@ export function AppShell({
             <div className="mb-5 flex items-center gap-3">
               <AscendMark />
               <div className="rounded-sm border border-border bg-background/45 px-2 py-1 text-[11px] font-semibold uppercase text-muted-soft">
-                Personal OS
+                Sales OS
               </div>
             </div>
             <p className="truncate text-sm font-semibold text-foreground">{organizationName}</p>

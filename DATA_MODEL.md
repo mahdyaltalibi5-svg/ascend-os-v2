@@ -36,6 +36,8 @@ Daily plans must remain unique on `(organizationId, userId, dateKey)`. Focus blo
 
 Revenue tables use integer cents for stored money. Future financial tables must keep `organizationId`, avoid hard deletes, validate linked records by organization, and prefer adjustment records over silent historical rewrites.
 
-Milestone 3 sales tables add `LeadCampaign`, `LeadBusiness`, `LeadContact`, `LeadCampaignMembership`, `LeadAnalysis`, `Prospect`, `OutreachAttempt`, `FollowUp`, `Appointment`, `Pipeline`, `PipelineStage`, `Opportunity`, `SalesGoal`, `ContactSuppression`, and `BackgroundJob`. These are all organization-scoped. Prospects, follow-ups, appointments, and opportunities also preserve user assignment IDs for own-vs-all permissions.
+Sales tables include `LeadCampaign`, `LeadBusiness`, `LeadContact`, `LeadCampaignMembership`, `LeadAnalysis`, `Prospect`, `OutreachAttempt`, `FollowUp`, `Appointment`, `Pipeline`, `PipelineStage`, `Opportunity`, `SalesGoal`, `ContactSuppression`, and `BackgroundJob`. Milestone 2 adds `CallAttempt`, `PendingCallSession`, `SalesCallback`, `LeadLock`, `CallingPolicy`, `PushSubscription`, and `OwnerReachScoreReview`.
+
+Call attempts are immutable and use organization-scoped idempotency keys. Pending call sessions preserve the active lead while a caller leaves and returns from a native phone app. Lead locks are unique per organization and lead so two callers cannot receive the same active lead. Sales callbacks keep exact scheduled times, assignment, completion/cancellation timestamps, and optional linked call-attempt IDs. Calling policies define permitted local calling windows. Push subscriptions are stored per user and device but do not imply provider delivery is configured.
 
 Lead deduplication uses Google Place ID, normalized phone, normalized domain, and normalized business name plus address. Won opportunity handoff links Revenue with Sales through `RevenueContract.sourceOpportunityId`.

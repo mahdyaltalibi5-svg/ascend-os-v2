@@ -9,13 +9,15 @@ describe("PWA manifest", () => {
       readFileSync(join(process.cwd(), "public", "manifest.webmanifest"), "utf8")
     ) as {
       name: string;
+      short_name: string;
       start_url: string;
       display: string;
       icons: unknown[];
     };
 
-    expect(manifest.name).toBe("Ascend OS");
-    expect(manifest.start_url).toBe("/app");
+    expect(manifest.name).toBe("Ascend Sales OS");
+    expect(manifest.short_name).toBe("Ascend OS");
+    expect(manifest.start_url).toBe("/app/call-desk");
     expect(manifest.display).toBe("standalone");
     expect(manifest.icons.length).toBeGreaterThan(0);
   });

@@ -1,8 +1,8 @@
 {
-  "name": "Ascend OS",
+  "name": "Ascend Sales OS",
   "short_name": "Ascend OS",
-  "description": "Secure operating foundation for Ascend OS.",
-  "start_url": "/app",
+  "description": "Owner-first CRM, call desk, callbacks, and appointments for Ascend Sales OS.",
+  "start_url": "/app/call-desk",
   "scope": "/",
   "display": "standalone",
   "background_color": "#05070d",
@@ -11,7 +11,7 @@
   "icons": [
     {
       "src": "/icons/icon.svg",
-      "sizes": "any",
+      "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     },

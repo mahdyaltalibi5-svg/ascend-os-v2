@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,13 @@ export function SigninForm() {
       password: ""
     }
   });
+
+  useEffect(() => {
+    if (params.get("clearLocalState") !== "1") return;
+    window.localStorage.removeItem("ascend_pending_call");
+    window.localStorage.removeItem("ascend_pending_note");
+    window.localStorage.removeItem("ascend_call_session_key");
+  }, [params]);
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);

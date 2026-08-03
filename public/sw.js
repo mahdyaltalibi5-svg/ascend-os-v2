@@ -1,4 +1,4 @@
-const CACHE_NAME = "ascend-os-foundation-v1";
+const CACHE_NAME = "ascend-sales-os-v2";
 const STATIC_ASSETS = ["/offline", "/manifest.webmanifest", "/icons/icon.svg", "/icons/maskable.svg"];
 
 self.addEventListener("install", (event) => {

@@ -26,7 +26,11 @@ Milestone 1 adds `/app/sales`, the CRM foundation for Mahdy and Logan to work Ut
 
 Lead integrity is enforced server-side. Duplicate normalized phone numbers are rejected, similar business names are warned in notes, permanent suppression records keep blocked numbers out of the call queue, and a lead can only become call ready when the phone is verified from the official company website or official Google Business Profile. Owner Direct phone type requires an owner evidence URL and is distinct from Official Company Line.
 
-Google Places is optional and server-only for stored campaign jobs, but scraping is not part of Milestone 1. Twilio, automated SMS, and Google Calendar are intentionally not configured or integrated yet. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md` for future integration boundaries.
+Milestone 2 adds `/app/call-desk`, `/app/callbacks`, `/app/calendar`, `/app/founder`, and `/app/sales-dashboard`. The call desk serves one assigned eligible lead at a time, creates pending call sessions, opens native `tel:` links, restores the active lead after refresh or PWA return, records immutable call attempts with idempotency keys, updates operational state, completes due callbacks, books internal appointments, applies permanent wrong-number/do-not-call suppression, releases lead locks, and loads the next eligible lead without a full page refresh.
+
+The queue is deterministic and server-side. It prioritizes exact due callbacks, overdue callbacks, interested leads, prior owner answers, full pitches, Owner Reach Score, best calling windows, lead/marketing score, fewest attempts, and oldest untouched leads. It excludes suppressed records, wrong numbers, do-not-call records, disqualified/closed leads, another user's assignments, active locks, future callbacks, unverified phones, non-call-ready leads, and active policy hours that are closed.
+
+Google Places is optional and server-only for stored campaign jobs, but scraping is not part of these milestones. Twilio Voice, automated cold SMS, Google Calendar sync, predictive dialing, call recording, and multi-line dialing are intentionally not configured or integrated yet. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md` for future integration boundaries.
 
 ## Quick Start: Docker PostgreSQL
 
@@ -100,7 +104,7 @@ SALES_WORKER_SECRET=
 CRON_SECRET=
 ```
 
-Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. `GOOGLE_PLACES_API_KEY`, `SALES_WORKER_SECRET`, and `CRON_SECRET` can remain empty for Milestone 1 unless you intentionally run stored provider jobs later. Do not add Twilio, SMS, scraping, or Google Calendar credentials for this milestone. After connecting the database, run migrations from a trusted machine or CI:
+Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. `GOOGLE_PLACES_API_KEY`, `SALES_WORKER_SECRET`, and `CRON_SECRET` can remain empty for Milestone 2 unless you intentionally run stored provider jobs later. Do not add Twilio, SMS, scraping, or Google Calendar credentials for this milestone. After connecting the database, run migrations from a trusted machine or CI:
 
 ```bash
 pnpm exec prisma migrate deploy
@@ -230,7 +234,9 @@ Do not run Playwright against production or a shared customer database. `pnpm ru
 
 ## PWA Notes
 
-The service worker is not registered during normal development. It caches only static install assets and `/offline` in production, never authenticated HTML or API responses.
+The manifest installs as `Ascend Sales OS` and starts at `/app/call-desk`. The service worker is not registered during normal development. It caches only static install assets and `/offline` in production, never authenticated HTML or API responses.
+
+Installed users can see in-app iPhone and Android install guidance from `/app/sales-dashboard`. Pending call state and draft notes are stored only in local browser storage for recovery and are cleared on logout. Optional push subscriptions have database and permission foundations, but delivery credentials are intentionally not configured in Milestone 2.
 
 To test installability:
 

@@ -5,15 +5,19 @@ import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register"
 
 export const metadata: Metadata = {
   title: {
-    default: "Ascend OS",
-    template: "%s | Ascend OS"
+    default: "Ascend Sales OS",
+    template: "%s | Ascend Sales OS"
   },
-  description: "Application foundation for Ascend OS.",
+  description: "Owner-first CRM and call desk for Ascend Sales OS.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg"
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Ascend OS"
+    title: "Ascend Sales OS"
   }
 };
 

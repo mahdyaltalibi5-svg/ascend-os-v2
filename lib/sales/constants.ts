@@ -40,9 +40,65 @@ export const crmTrades = ["HVAC", "Plumbing"] as const;
 
 export const phoneTypes = [
   "direct_owner",
+  "owner_operated_main_line",
   "official_company_line",
   "office_line",
   "unknown"
+] as const;
+
+export const callOutcomes = [
+  "no_answer",
+  "voicemail",
+  "receptionist",
+  "dispatcher",
+  "employee",
+  "owner_reached",
+  "full_pitch_delivered",
+  "interested",
+  "callback_requested",
+  "callback_completed",
+  "appointment_booked",
+  "not_interested",
+  "wrong_number",
+  "disqualified",
+  "do_not_call"
+] as const;
+
+export const contactTypes = [
+  "owner",
+  "partner",
+  "manager",
+  "receptionist",
+  "dispatcher",
+  "employee",
+  "voicemail",
+  "unknown"
+] as const;
+
+export const callbackStatuses = [
+  "scheduled",
+  "due",
+  "overdue",
+  "completed",
+  "canceled",
+  "missed"
+] as const;
+
+export const callSessionStatuses = ["pending", "completed", "canceled"] as const;
+
+export const leadOperationalStatuses = [
+  "new",
+  "attempted",
+  "owner_reached",
+  "interested",
+  "appointment_booked",
+  "showed",
+  "proposal_sent",
+  "closed_won",
+  "closed_lost",
+  "disqualified",
+  "wrong_number",
+  "do_not_call"
 ] as const;
 
 export const phoneVerificationMethods = [
@@ -105,6 +161,10 @@ export const appointmentStatuses = [
 ] as const;
 
 export const meetingTypes = [
+  "phone",
+  "google_meet",
+  "zoom",
+  "in_person",
   "discovery",
   "sales_call",
   "follow_up",
@@ -230,6 +290,7 @@ export const salesLabelByValue: Record<string, string> = {
   duplicate: "Duplicate",
   do_not_contact: "Do not contact",
   direct_owner: "Owner Direct",
+  owner_operated_main_line: "Owner-Operated Main Line",
   official_company_line: "Official Company Line",
   office_line: "Office Line",
   unknown: "Unknown",
@@ -243,9 +304,24 @@ export const salesLabelByValue: Record<string, string> = {
   attempting_contact: "Attempting contact",
   appointment_booked: "Appointment booked",
   no_answer: "No answer",
+  receptionist: "Receptionist",
+  dispatcher: "Dispatcher",
+  employee: "Employee",
+  owner_reached: "Owner reached",
+  full_pitch_delivered: "Full pitch delivered",
   callback_requested: "Callback requested",
+  callback_completed: "Callback completed",
+  scheduled: "Scheduled",
+  due: "Due",
+  overdue: "Overdue",
+  canceled: "Canceled",
+  missed: "Missed",
+  do_not_call: "Do not call",
+  disqualified: "Disqualified",
   owner_conversation: "Owner conversation",
   wrong_number: "Wrong number",
+  google_meet: "Google Meet",
+  in_person: "In person",
   no_show: "No-show",
   sales_call: "Sales call",
   proposal_review: "Proposal review"

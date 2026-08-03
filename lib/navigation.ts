@@ -2,9 +2,13 @@ import {
   BadgeDollarSign,
   Bot,
   Building2,
+  CalendarDays,
+  Clock3,
   Megaphone,
+  PhoneCall,
   RadioTower,
   Settings,
+  ShieldCheck,
   Target,
   UsersRound
 } from "lucide-react";
@@ -35,6 +39,46 @@ export const appNavigation: NavItem[] = [
     icon: Target,
     permissions: ["leads.view", "prospects.view_own", "prospects.view_all", "pipeline.view_own"],
     description: "Lead engine, sales queue, appointments, and pipeline."
+  },
+  {
+    label: "Call Desk",
+    href: "/app/call-desk",
+    icon: PhoneCall,
+    permissions: ["calls.create", "calls.operate_assigned"],
+    description: "One-lead-at-a-time calling workspace."
+  },
+  {
+    label: "Callbacks",
+    href: "/app/callbacks",
+    icon: Clock3,
+    permissions: ["callbacks.view_own", "callbacks.view_all"],
+    description: "Exact callback queue and status tracking."
+  },
+  {
+    label: "Calendar",
+    href: "/app/calendar",
+    icon: CalendarDays,
+    permissions: [
+      "appointments.view_own",
+      "appointments.view_all",
+      "callbacks.view_own",
+      "callbacks.view_all"
+    ],
+    description: "Internal appointments, callbacks, and follow-ups."
+  },
+  {
+    label: "My Dashboard",
+    href: "/app/sales-dashboard",
+    icon: Target,
+    permissions: ["analytics.personal"],
+    description: "Personal sales performance and next actions."
+  },
+  {
+    label: "Founder",
+    href: "/app/founder",
+    icon: ShieldCheck,
+    permissions: ["analytics.company"],
+    description: "Company-wide calling, queue, and team controls."
   },
   {
     label: "Revenue",

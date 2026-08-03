@@ -61,6 +61,13 @@ model User {
   inAppNotifications        InAppNotification[]
   revenueGoals              RevenueGoal[]
   createdRevenueAdjustments RevenueAdjustment[]      @relation("RevenueAdjustmentCreator")
+  callerCallAttempts        CallAttempt[]
+  pendingCallSessions       PendingCallSession[]
+  assignedCallbacks         SalesCallback[]          @relation("CallbackAssignee")
+  createdCallbacks          SalesCallback[]          @relation("CallbackCreator")
+  leadLocks                 LeadLock[]
+  pushSubscriptions         PushSubscription[]
+  ownerReachScoreReviews    OwnerReachScoreReview[]
 }
 
 model Account {
@@ -155,6 +162,13 @@ model Organization {
   salesGoals                SalesGoal[]
   contactSuppressions       ContactSuppression[]
   backgroundJobs            BackgroundJob[]
+  callAttempts              CallAttempt[]
+  pendingCallSessions       PendingCallSession[]
+  salesCallbacks            SalesCallback[]
+  leadLocks                 LeadLock[]
+  callingPolicies           CallingPolicy[]
+  pushSubscriptions         PushSubscription[]
+  ownerReachScoreReviews    OwnerReachScoreReview[]
 }
 
 model OrganizationMembership {
@@ -775,60 +789,74 @@ model LeadCampaign {
 }
 
 model LeadBusiness {
-  id                       String                   @id @default(cuid())
-  organizationId           String
-  businessName             String
-  normalizedBusinessName   String
-  trade                    String?
-  ownerName                String?
-  primaryPhone             String?
-  normalizedPhone          String?
-  email                    String?
-  websiteUrl               String?
-  normalizedDomain         String?
-  googleBusinessProfileUrl String?
-  address                  String?
-  city                     String?
-  state                    String?
-  postalCode               String?
-  country                  String                   @default("United States")
-  latitude                 Decimal?                 @db.Decimal(10, 7)
-  longitude                Decimal?                 @db.Decimal(10, 7)
-  industry                 String?
-  subIndustry              String?
-  googlePlaceId            String?
-  googleMapsUrl            String?
-  rating                   Decimal?                 @db.Decimal(3, 2)
-  reviewCount              Int?
-  businessStatus           String?
-  source                   String                   @default("manual")
-  sourceRecordId           String?
-  franchiseStatus          String?
-  ownerOperatedLikelihood  Int?
-  estimatedCompanySize     String?
-  sourceUrls               String[]                 @default([])
-  ownerVerificationSource  String?
-  phoneVerificationSource  String?
-  phoneVerificationDate    DateTime?
-  phoneVerificationMethod  String                   @default("unverified")
-  phoneType                String                   @default("unknown")
-  leadScore                Int                      @default(0)
-  assignedUserId           String?
-  lastContactedAt          DateTime?
-  nextFollowUpAt           DateTime?
-  doNotCall                Boolean                  @default(false)
-  callReady                Boolean                  @default(false)
-  callReadyAt              DateTime?
-  notes                    String?
-  archivedAt               DateTime?
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  organization             Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contacts                 LeadContact[]
-  campaignMemberships      LeadCampaignMembership[]
-  analyses                 LeadAnalysis[]
-  prospects                Prospect[]
-  suppressions             ContactSuppression[]
+  id                        String                   @id @default(cuid())
+  organizationId            String
+  businessName              String
+  normalizedBusinessName    String
+  trade                     String?
+  ownerName                 String?
+  primaryPhone              String?
+  normalizedPhone           String?
+  email                     String?
+  websiteUrl                String?
+  normalizedDomain          String?
+  googleBusinessProfileUrl  String?
+  address                   String?
+  city                      String?
+  state                     String?
+  postalCode                String?
+  country                   String                   @default("United States")
+  latitude                  Decimal?                 @db.Decimal(10, 7)
+  longitude                 Decimal?                 @db.Decimal(10, 7)
+  industry                  String?
+  subIndustry               String?
+  googlePlaceId             String?
+  googleMapsUrl             String?
+  rating                    Decimal?                 @db.Decimal(3, 2)
+  reviewCount               Int?
+  businessStatus            String?
+  source                    String                   @default("manual")
+  sourceRecordId            String?
+  franchiseStatus           String?
+  ownerOperatedLikelihood   Int?
+  estimatedCompanySize      String?
+  sourceUrls                String[]                 @default([])
+  ownerVerificationSource   String?
+  phoneVerificationSource   String?
+  phoneVerificationDate     DateTime?
+  phoneVerificationMethod   String                   @default("unverified")
+  phoneType                 String                   @default("unknown")
+  leadScore                 Int                      @default(0)
+  ownerReachScore           Int                      @default(0)
+  ownerReachScoreReasons    String[]                 @default([])
+  operationalStatus         String                   @default("new")
+  assignedUserId            String?
+  lastContactedAt           DateTime?
+  nextFollowUpAt            DateTime?
+  bestCallingWindowStart    String?
+  bestCallingWindowEnd      String?
+  bestCallingWindowTimezone String?
+  marketingNeedSignals      String[]                 @default([])
+  websiteWeaknesses         String[]                 @default([])
+  wrongNumber               Boolean                  @default(false)
+  doNotCall                 Boolean                  @default(false)
+  callReady                 Boolean                  @default(false)
+  callReadyAt               DateTime?
+  notes                     String?
+  archivedAt                DateTime?
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  organization              Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts                  LeadContact[]
+  campaignMemberships       LeadCampaignMembership[]
+  analyses                  LeadAnalysis[]
+  prospects                 Prospect[]
+  suppressions              ContactSuppression[]
+  callAttempts              CallAttempt[]
+  pendingCallSessions       PendingCallSession[]
+  callbacks                 SalesCallback[]
+  locks                     LeadLock[]
+  ownerReachScoreReviews    OwnerReachScoreReview[]
 
   @@unique([organizationId, googlePlaceId])
   @@unique([organizationId, normalizedPhone])
@@ -837,6 +865,9 @@ model LeadBusiness {
   @@index([organizationId, normalizedBusinessName, address])
   @@index([organizationId, trade, city, state])
   @@index([organizationId, assignedUserId, callReady])
+  @@index([organizationId, assignedUserId, operationalStatus])
+  @@index([organizationId, ownerReachScore])
+  @@index([organizationId, wrongNumber])
   @@index([organizationId, doNotCall])
   @@index([organizationId, industry, city, state])
   @@index([organizationId, archivedAt])
@@ -1201,4 +1232,165 @@ model BackgroundJob {
   @@index([organizationId, status, type])
   @@index([organizationId, campaignId])
   @@index([status, lockedAt])
+}
+
+model CallAttempt {
+  id                    String              @id @default(cuid())
+  organizationId        String
+  leadBusinessId        String
+  callerUserId          String?
+  pendingSessionId      String?
+  idempotencyKey        String
+  startedAt             DateTime
+  endedAt               DateTime?
+  durationSeconds       Int?
+  outcome               String
+  contactType           String              @default("unknown")
+  ownerReached          Boolean             @default(false)
+  fullPitchDelivered    Boolean             @default(false)
+  interested            Boolean             @default(false)
+  callbackRequested     Boolean             @default(false)
+  appointmentBooked     Boolean             @default(false)
+  notes                 String?
+  previousPipelineStage String?
+  newPipelineStage      String?
+  nextAction            String?
+  createdAt             DateTime            @default(now())
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness          LeadBusiness        @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  caller                User?               @relation(fields: [callerUserId], references: [id], onDelete: SetNull)
+  pendingSession        PendingCallSession? @relation(fields: [pendingSessionId], references: [id], onDelete: SetNull)
+  callbacks             SalesCallback[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, leadBusinessId, startedAt])
+  @@index([organizationId, callerUserId, startedAt])
+  @@index([organizationId, outcome])
+}
+
+model PendingCallSession {
+  id             String        @id @default(cuid())
+  organizationId String
+  leadBusinessId String
+  callerUserId   String
+  sessionKey     String
+  status         String        @default("pending")
+  startedAt      DateTime      @default(now())
+  lastSeenAt     DateTime      @default(now())
+  canceledAt     DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness   LeadBusiness  @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  caller         User          @relation(fields: [callerUserId], references: [id], onDelete: Cascade)
+  callAttempts   CallAttempt[]
+
+  @@unique([organizationId, callerUserId, sessionKey])
+  @@index([organizationId, callerUserId, status])
+  @@index([organizationId, leadBusinessId, status])
+}
+
+model SalesCallback {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  leadBusinessId      String
+  assignedCallerId    String
+  scheduledAt         DateTime
+  timezone            String
+  reason              String
+  notes               String?
+  status              String       @default("scheduled")
+  createdById         String?
+  linkedCallAttemptId String?
+  completedAt         DateTime?
+  canceledAt          DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness        LeadBusiness @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  assignedCaller      User         @relation("CallbackAssignee", fields: [assignedCallerId], references: [id], onDelete: Cascade)
+  createdBy           User?        @relation("CallbackCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  linkedCallAttempt   CallAttempt? @relation(fields: [linkedCallAttemptId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, assignedCallerId, status, scheduledAt])
+  @@index([organizationId, scheduledAt])
+  @@index([organizationId, leadBusinessId, status])
+}
+
+model LeadLock {
+  id             String       @id @default(cuid())
+  organizationId String
+  leadBusinessId String
+  lockedByUserId String
+  sessionKey     String
+  createdAt      DateTime     @default(now())
+  expiresAt      DateTime
+  releasedAt     DateTime?
+  releaseReason  String?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness   LeadBusiness @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  lockedBy       User         @relation(fields: [lockedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, leadBusinessId])
+  @@index([organizationId, lockedByUserId, expiresAt])
+  @@index([organizationId, expiresAt])
+}
+
+model CallingPolicy {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String       @default("Default calling policy")
+  timezone       String
+  weekdayStart   String       @default("09:00")
+  weekdayEnd     String       @default("18:00")
+  saturdayStart  String?
+  saturdayEnd    String?
+  sundayStart    String?
+  sundayEnd      String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, active])
+}
+
+model PushSubscription {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  endpointHash   String
+  endpoint       String
+  p256dh         String?
+  auth           String?
+  userAgent      String?
+  enabled        Boolean      @default(true)
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId, endpointHash])
+  @@index([organizationId, userId, enabled])
+}
+
+model OwnerReachScoreReview {
+  id              String       @id @default(cuid())
+  organizationId  String
+  leadBusinessId  String
+  reviewedById    String?
+  previousScore   Int
+  newScore        Int
+  previousReasons String[]
+  newReasons      String[]
+  reason          String
+  createdAt       DateTime     @default(now())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness    LeadBusiness @relation(fields: [leadBusinessId], references: [id], onDelete: Cascade)
+  reviewedBy      User?        @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, leadBusinessId, createdAt])
+  @@index([organizationId, reviewedById])
 }
