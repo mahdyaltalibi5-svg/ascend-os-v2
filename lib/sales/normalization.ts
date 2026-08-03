@@ -38,6 +38,69 @@ export function normalizeEmail(value?: string | null) {
   return value?.trim().toLowerCase() || null;
 }
 
+export function normalizeSourceUrls(value?: string | string[] | null) {
+  const raw = Array.isArray(value) ? value : String(value ?? "").split(/\n|,/);
+  return Array.from(
+    new Set(
+      raw
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 12)
+    )
+  );
+}
+
+export function isOfficialPhoneVerification(method?: string | null) {
+  return method === "official_company_website" || method === "official_google_business_profile";
+}
+
+export function canMarkCallReady(input: {
+  normalizedPhone?: string | null;
+  phoneVerificationMethod?: string | null;
+  phoneVerificationSource?: string | null;
+}) {
+  return Boolean(
+    input.normalizedPhone &&
+    input.phoneVerificationSource?.trim() &&
+    isOfficialPhoneVerification(input.phoneVerificationMethod)
+  );
+}
+
+export function crmLeadScore(input: {
+  trade?: string | null;
+  state?: string | null;
+  normalizedPhone?: string | null;
+  phoneVerificationMethod?: string | null;
+  phoneVerificationSource?: string | null;
+  phoneType?: string | null;
+  ownerName?: string | null;
+  websiteUrl?: string | null;
+  googleBusinessProfileUrl?: string | null;
+}) {
+  let score = 0;
+  if (input.trade === "HVAC" || input.trade === "Plumbing") score += 20;
+  if (input.state?.toUpperCase() === "UT") score += 15;
+  if (canMarkCallReady(input)) score += 30;
+  if (input.phoneType === "direct_owner") score += 10;
+  if (input.phoneType === "official_company_line") score += 6;
+  if (input.ownerName) score += 8;
+  if (input.websiteUrl) score += 7;
+  if (input.googleBusinessProfileUrl) score += 5;
+  return Math.min(100, score);
+}
+
+export function businessNameSimilarity(a: string, b: string) {
+  const left = new Set(normalizeBusinessName(a).split(" ").filter(Boolean));
+  const right = new Set(normalizeBusinessName(b).split(" ").filter(Boolean));
+  const union = new Set([...left, ...right]);
+  if (!union.size) return 0;
+  let intersection = 0;
+  for (const token of left) {
+    if (right.has(token)) intersection += 1;
+  }
+  return intersection / union.size;
+}
+
 export function normalizedAddressKey(input: {
   address?: string | null;
   city?: string | null;

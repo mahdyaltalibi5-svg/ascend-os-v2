@@ -36,6 +36,22 @@ export const prospectStatuses = [
   "archived"
 ] as const;
 
+export const crmTrades = ["HVAC", "Plumbing"] as const;
+
+export const phoneTypes = [
+  "direct_owner",
+  "official_company_line",
+  "office_line",
+  "unknown"
+] as const;
+
+export const phoneVerificationMethods = [
+  "official_company_website",
+  "official_google_business_profile",
+  "other",
+  "unverified"
+] as const;
+
 export const prospectPriorities = ["critical", "hot", "warm", "standard", "low"] as const;
 
 export const outreachChannels = [
@@ -55,10 +71,12 @@ export const outreachOutcomes = [
   "gatekeeper",
   "owner_unavailable",
   "owner_conversation",
+  "full_pitch",
   "not_interested",
   "callback_requested",
   "interested",
   "appointment_booked",
+  "proposal_sent",
   "do_not_contact",
   "bad_fit",
   "failed",
@@ -175,21 +193,18 @@ export const leadIndustryPresets = [
 ] as const;
 
 export const defaultPipelineStages = [
-  ["New prospect", 5],
-  ["Attempting contact", 10],
-  ["Connected", 18],
-  ["Qualified", 28],
-  ["Appointment booked", 40],
-  ["Appointment held", 52],
-  ["Proposal sent", 65],
-  ["Follow-up", 70],
-  ["Verbal agreement", 82],
-  ["Contract sent", 90],
-  ["Contract signed", 96],
-  ["Deposit pending", 98],
-  ["Won", 100, true],
-  ["Lost", 0, false, true],
-  ["Nurture", 12]
+  ["New", 5],
+  ["Attempted", 10],
+  ["Owner Reached", 18],
+  ["Interested", 28],
+  ["Appointment Booked", 40],
+  ["Showed", 55],
+  ["Proposal Sent", 70],
+  ["Closed Won", 100, true],
+  ["Closed Lost", 0, false, true],
+  ["Disqualified", 0, false, true],
+  ["Wrong Number", 0, false, true],
+  ["Do Not Call", 0, false, true]
 ] as const;
 
 export const defaultSalesGoals = [
@@ -214,6 +229,16 @@ export const salesLabelByValue: Record<string, string> = {
   bad_fit: "Bad fit",
   duplicate: "Duplicate",
   do_not_contact: "Do not contact",
+  direct_owner: "Owner Direct",
+  official_company_line: "Official Company Line",
+  office_line: "Office Line",
+  unknown: "Unknown",
+  official_company_website: "Official company website",
+  official_google_business_profile: "Official Google Business Profile",
+  other: "Other",
+  unverified: "Unverified",
+  full_pitch: "Full pitch",
+  proposal_sent: "Proposal sent",
   needs_review: "Needs review",
   attempting_contact: "Attempting contact",
   appointment_booked: "Appointment booked",

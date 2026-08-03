@@ -123,3 +123,5 @@ console.log("Start the app: pnpm run dev");
 console.log("Open: http://localhost:3000");
 console.log("Founder: founder@ascend.local / AscendDev123!");
 console.log("Salesperson: sales@ascend.local / AscendDev123!");
+console.log("Mahdy: mahdy@ascend.local / AscendDev123!");
+console.log("Logan: logan@ascend.local / AscendDev123!");

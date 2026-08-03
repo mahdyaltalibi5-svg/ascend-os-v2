@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  businessNameSimilarity,
+  canMarkCallReady,
+  crmLeadScore,
   dedupeCandidateKeys,
   escapeCsvFormula,
   normalizeBusinessName,
@@ -84,7 +87,15 @@ describe("sales core helpers", () => {
           estimatedValueCents: 500000,
           createdAt: now,
           leadBusinessId: "lead1",
-          leadBusiness: { reviewCount: 42, rating: 4.1, city: "Phoenix", state: "AZ" }
+          leadBusiness: {
+            reviewCount: 42,
+            rating: 4.1,
+            city: "Salt Lake City",
+            state: "UT",
+            normalizedPhone: "8015550100",
+            callReady: true,
+            doNotCall: false
+          }
         },
         now
       )
@@ -99,5 +110,38 @@ describe("sales core helpers", () => {
     expect(isPrivateIp("127.0.0.1")).toBe(true);
     expect(isPrivateIp("192.168.1.10")).toBe(true);
     expect(isPrivateIp("8.8.8.8")).toBe(false);
+  });
+
+  it("enforces CRM call-ready evidence and similar-name warnings", () => {
+    expect(
+      canMarkCallReady({
+        normalizedPhone: "8015550100",
+        phoneVerificationMethod: "official_company_website",
+        phoneVerificationSource: "https://example.com/contact"
+      })
+    ).toBe(true);
+    expect(
+      canMarkCallReady({
+        normalizedPhone: "8015550100",
+        phoneVerificationMethod: "other",
+        phoneVerificationSource: "https://directory.example"
+      })
+    ).toBe(false);
+    expect(
+      crmLeadScore({
+        trade: "HVAC",
+        state: "UT",
+        normalizedPhone: "8015550100",
+        phoneVerificationMethod: "official_google_business_profile",
+        phoneVerificationSource: "https://maps.google.com/?cid=123",
+        phoneType: "official_company_line",
+        ownerName: "Jamie Smith",
+        websiteUrl: "https://example.com",
+        googleBusinessProfileUrl: "https://maps.google.com/?cid=123"
+      })
+    ).toBeGreaterThan(80);
+    expect(
+      businessNameSimilarity("Wasatch Plumbing LLC", "Wasatch Plumbing Company")
+    ).toBeGreaterThan(0.7);
   });
 });

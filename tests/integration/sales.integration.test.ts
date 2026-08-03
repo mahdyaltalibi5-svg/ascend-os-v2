@@ -65,24 +65,50 @@ describeSales("sales database workflows", () => {
     const lead = await prisma.leadBusiness.create({
       data: {
         organizationId: orgA.id,
-        businessName: "Apex Roofing",
-        normalizedBusinessName: normalizeBusinessName("Apex Roofing"),
-        primaryPhone: "(602) 555-0100",
-        normalizedPhone: normalizePhone("(602) 555-0100"),
+        businessName: "Wasatch Comfort Pros",
+        normalizedBusinessName: normalizeBusinessName("Wasatch Comfort Pros"),
+        trade: "HVAC",
+        ownerName: "Jamie Smith",
+        primaryPhone: "(801) 555-0100",
+        normalizedPhone: normalizePhone("(801) 555-0100"),
+        email: "owner@wasatch.example",
         websiteUrl: "https://apex.example",
         normalizedDomain: normalizeDomain("https://apex.example"),
-        city: "Phoenix",
-        state: "AZ",
-        industry: "roofing",
+        googleBusinessProfileUrl: "https://maps.google.com/?cid=123",
+        city: "Salt Lake City",
+        state: "UT",
+        industry: "HVAC",
+        sourceUrls: ["https://apex.example/contact"],
+        phoneVerificationMethod: "official_company_website",
+        phoneVerificationSource: "https://apex.example/contact",
+        phoneVerificationDate: new Date("2026-07-28T16:00:00.000Z"),
+        phoneType: "official_company_line",
+        leadScore: 83,
+        callReady: true,
+        callReadyAt: new Date("2026-07-28T16:00:00.000Z"),
         rating: 4.1,
         reviewCount: 42,
         source: "manual"
       }
     });
     const duplicate = await prisma.leadBusiness.findFirst({
-      where: { organizationId: orgA.id, normalizedPhone: normalizePhone("6025550100") }
+      where: { organizationId: orgA.id, normalizedPhone: normalizePhone("8015550100") }
     });
     expect(duplicate?.id).toBe(lead.id);
+    await expect(
+      prisma.leadBusiness.create({
+        data: {
+          organizationId: orgA.id,
+          businessName: "Duplicate Comfort",
+          normalizedBusinessName: normalizeBusinessName("Duplicate Comfort"),
+          trade: "HVAC",
+          primaryPhone: "8015550100",
+          normalizedPhone: normalizePhone("8015550100"),
+          state: "UT",
+          source: "manual"
+        }
+      })
+    ).rejects.toThrow();
 
     const analysis = await prisma.leadAnalysis.create({
       data: {
@@ -213,9 +239,13 @@ describeSales("sales database workflows", () => {
       data: {
         organizationId: orgA.id,
         prospectId: prospect.id,
-        phone: normalizePhone("(602) 555-0100"),
+        leadBusinessId: lead.id,
+        businessName: lead.businessName,
+        normalizedBusinessName: lead.normalizedBusinessName,
+        phone: normalizePhone("(801) 555-0100"),
         channel: "phone",
-        reason: "do_not_call"
+        reason: "do_not_call",
+        permanent: true
       }
     });
     const crossOrgProspectLookup = await prisma.prospect.findFirst({

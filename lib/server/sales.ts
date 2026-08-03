@@ -1,7 +1,16 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/server/db";
 import { calculateSalesMetrics, rankQueue, salesRecommendation } from "@/lib/sales/operations";
 
 export type SalesCommandData = Awaited<ReturnType<typeof getSalesCommandData>>;
+
+export type SalesLeadFilters = {
+  search?: string;
+  trade?: string;
+  status?: string;
+  sort?: string;
+};
 
 export async function getDefaultPipeline(organizationId: string) {
   let pipeline = await prisma.pipeline.findFirst({
@@ -23,6 +32,7 @@ export async function getSalesCommandData(input: {
   userId: string;
   permissions: string[];
   timezone: string;
+  filters?: SalesLeadFilters;
 }) {
   const now = new Date();
   const dayStart = new Date(now);
@@ -35,6 +45,8 @@ export async function getSalesCommandData(input: {
     input.permissions.includes("sales.reports.view");
   const ownFilter = canViewAll ? {} : { assignedUserId: input.userId };
   const pipeline = await getDefaultPipeline(input.organizationId);
+  const leadWhere = leadFilterWhere(input.organizationId, input.filters);
+  const leadOrderBy = leadSort(input.filters?.sort);
 
   const [
     campaigns,
@@ -58,9 +70,9 @@ export async function getSalesCommandData(input: {
       take: 30
     }),
     prisma.leadBusiness.findMany({
-      where: { organizationId: input.organizationId, archivedAt: null },
+      where: leadWhere,
       include: { analyses: { orderBy: { createdAt: "desc" }, take: 1 }, prospects: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: leadOrderBy,
       take: 120
     }),
     prisma.leadAnalysis.findMany({
@@ -157,8 +169,30 @@ export async function getSalesCommandData(input: {
     })
   ]);
 
-  const queue = rankQueue(prospects, now).slice(0, 40);
+  const suppressedPhones = new Set(
+    suppressions
+      .filter(
+        (suppression) => suppression.permanent && ["phone", "all"].includes(suppression.channel)
+      )
+      .map((suppression) => suppression.phone)
+      .filter(Boolean)
+  );
+  const queue = rankQueue(
+    prospects.filter((prospect) => !suppressedPhones.has(prospect.leadBusiness.normalizedPhone)),
+    now
+  ).slice(0, 40);
   const metrics = calculateSalesMetrics({ attempts, appointments, opportunities });
+  const callsByUser = members.map((member) => ({
+    userId: member.userId,
+    name: member.user.name ?? member.user.email,
+    count: attempts.filter(
+      (attempt) => attempt.userId === member.userId && attempt.channel === "phone"
+    ).length
+  }));
+  const callsByMahdy =
+    callsByUser.find((item) => item.name.toLowerCase().includes("mahdy"))?.count ?? 0;
+  const callsByLogan =
+    callsByUser.find((item) => item.name.toLowerCase().includes("logan"))?.count ?? 0;
   const hotUntouched = prospects.filter((prospect) => {
     const classification = prospect.leadBusiness.analyses[0]?.classification;
     return (classification === "hot" || prospect.priority === "hot") && prospect.attemptCount === 0;
@@ -194,7 +228,12 @@ export async function getSalesCommandData(input: {
     suppressions,
     members,
     services,
-    metrics,
+    metrics: {
+      ...metrics,
+      callsByUser,
+      callsByMahdy,
+      callsByLogan
+    },
     attention: {
       hotUntouched,
       overdueFollowUps,
@@ -214,4 +253,34 @@ export async function getSalesCommandData(input: {
       unassignedProspects
     })
   };
+}
+
+function leadFilterWhere(organizationId: string, filters?: SalesLeadFilters) {
+  const where: Prisma.LeadBusinessWhereInput = {
+    organizationId,
+    archivedAt: null
+  };
+  const search = filters?.search?.trim();
+  if (search) {
+    where.OR = [
+      { businessName: { contains: search, mode: "insensitive" } },
+      { ownerName: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
+      { primaryPhone: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } }
+    ];
+  }
+  if (filters?.trade === "HVAC" || filters?.trade === "Plumbing") where.trade = filters.trade;
+  if (filters?.status === "call_ready") where.callReady = true;
+  if (filters?.status === "needs_evidence") where.callReady = false;
+  if (filters?.status === "do_not_call") where.doNotCall = true;
+  return where;
+}
+
+function leadSort(sort?: string) {
+  if (sort === "name") return { businessName: "asc" } as const;
+  if (sort === "score") return { leadScore: "desc" } as const;
+  if (sort === "follow_up") return { nextFollowUpAt: "asc" } as const;
+  if (sort === "last_contacted") return { lastContactedAt: "desc" } as const;
+  return { updatedAt: "desc" } as const;
 }

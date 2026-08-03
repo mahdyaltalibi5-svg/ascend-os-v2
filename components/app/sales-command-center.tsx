@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   CalendarClock,
   CheckCircle2,
   Download,
@@ -28,6 +29,7 @@ import {
   launchLeadCampaignAction,
   moveOpportunityStageAction,
   recordOutreachAttemptAction,
+  updateLeadBusinessAction,
   updateProspectAction
 } from "@/app/(app)/app/sales/actions";
 import { Button } from "@/components/ui/button";
@@ -38,10 +40,13 @@ import { formatMoney, labelize } from "@/lib/revenue/formatting";
 import {
   appointmentStatuses,
   campaignStatuses,
+  crmTrades,
   leadIndustryPresets,
   meetingTypes,
   outreachChannels,
   outreachOutcomes,
+  phoneTypes,
+  phoneVerificationMethods,
   prospectPriorities,
   salesGoalMetrics,
   salesLabelByValue
@@ -85,11 +90,11 @@ export function SalesCommandCenter({
         <div className="max-w-4xl">
           <p className="text-sm font-semibold text-primary">Sales Operating System</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
-            Lead engine and pipeline
+            Utah HVAC and plumbing CRM
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted md:text-base">
-            Every sales number here comes from stored Ascend OS records. Google Places is only used
-            when a production API key is configured; manual and CSV leads work without it.
+            Discover, qualify, call, track, and follow up with owner-verified local businesses.
+            Call-ready leads require official phone evidence before they enter the queue.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -132,22 +137,26 @@ export function SalesCommandCenter({
         ))}
       </nav>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <Score icon={Radar} label="Qualified leads" value={String(data.leadBusinesses.length)} />
-        <Score icon={PhoneCall} label="Callable queue" value={String(data.queue.length)} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <Score icon={PhoneCall} label="Dials today" value={String(data.metrics.dialsToday)} />
+        <Score icon={Activity} label="Answers" value={String(data.metrics.answers)} />
+        <Score icon={Target} label="Owners reached" value={String(data.metrics.ownersReached)} />
+        <Score icon={Radar} label="Full pitches" value={String(data.metrics.fullPitches)} />
         <Score
-          icon={Target}
-          label="Hot untouched"
-          value={String(data.attention.hotUntouched)}
+          icon={CalendarClock}
+          label="Meetings booked"
+          value={String(data.metrics.meetingsBooked)}
+        />
+        <Score icon={Flag} label="Booking rate" value={`${data.metrics.bookingRate}%`} />
+        <Score
+          icon={CalendarClock}
+          label="Follow-ups due"
+          value={String(data.attention.overdueFollowUps)}
           tone="hot"
         />
-        <Score icon={Activity} label="Attempts today" value={String(data.metrics.attempts)} />
-        <Score icon={CalendarClock} label="Appointments" value={String(data.appointments.length)} />
-        <Score
-          icon={Flag}
-          label="Open pipeline"
-          value={formatMoney(data.metrics.openPipelineCents)}
-        />
+        <Score icon={PhoneCall} label="Calls by Mahdy" value={String(data.metrics.callsByMahdy)} />
+        <Score icon={PhoneCall} label="Calls by Logan" value={String(data.metrics.callsByLogan)} />
+        <Score icon={Radar} label="Callable queue" value={String(data.queue.length)} />
       </div>
 
       <Card className="scan-line">
@@ -223,7 +232,7 @@ function OverviewView({
     <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
       <div className="grid gap-6">
         {canManageCampaigns ? <CampaignPanel data={data} /> : null}
-        {canManageLeads ? <ManualLeadPanel /> : null}
+        {canManageLeads ? <ManualLeadPanel data={data} /> : null}
         {canManageLeads ? <CsvImportPanel /> : null}
         <LeadReviewPanel data={data} canResearch={canResearch} canConvert={canManageProspects} />
       </div>
@@ -298,31 +307,94 @@ function CampaignPanel({ data }: { data: SalesCommandData }) {
   );
 }
 
-function ManualLeadPanel() {
+function ManualLeadPanel({ data }: { data: SalesCommandData }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Manual lead entry</CardTitle>
+        <CardTitle>Create lead</CardTitle>
         <CardDescription>
-          Use this when provider keys are absent or a lead came from research.
+          Phone evidence must be official before a lead can become call ready.
         </CardDescription>
       </CardHeader>
       <form action={createManualLeadAction} className="grid gap-3">
-        <Input name="businessName" label="Business name" placeholder="Apex Roofing" />
+        <Input name="businessName" label="Business name" placeholder="Wasatch Comfort Pros" />
         <div className="grid gap-3 sm:grid-cols-3">
-          <Input name="primaryPhone" label="Phone" placeholder="602-555-0100" />
-          <Input name="websiteUrl" label="Website" placeholder="https://example.com" />
-          <Input name="industry" label="Industry" placeholder="Roofing" />
+          <Select name="trade" label="Trade" defaultValue="HVAC">
+            {crmTrades.map((trade) => (
+              <option key={trade} value={trade}>
+                {trade}
+              </option>
+            ))}
+          </Select>
+          <Input name="ownerName" label="Owner name" placeholder="Owner evidence required" />
+          <Select name="assignedUserId" label="Assigned user">
+            <option value="">Unassigned</option>
+            {assignmentMembers(data).map((member) => (
+              <option key={member.userId} value={member.userId}>
+                {member.user.name ?? member.user.email}
+              </option>
+            ))}
+          </Select>
         </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input name="primaryPhone" label="Phone" placeholder="801-555-0100" />
+          <Input name="email" label="Email" placeholder="owner@example.com" />
+          <Select name="phoneType" label="Phone type" defaultValue="unknown">
+            {phoneTypes.map((type) => (
+              <option key={type} value={type}>
+                {label(type)}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="websiteUrl" label="Website" placeholder="https://example.com" />
+          <Input name="googleBusinessProfileUrl" label="Google Business Profile URL" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="ownerVerificationSource" label="Owner verification source" />
+          <Input name="phoneVerificationSource" label="Phone verification source" />
+        </div>
+        <Select
+          name="phoneVerificationMethod"
+          label="Phone verification method"
+          defaultValue="unverified"
+        >
+          {phoneVerificationMethods.map((method) => (
+            <option key={method} value={method}>
+              {label(method)}
+            </option>
+          ))}
+        </Select>
+        <textarea
+          className="ascend-input min-h-20 py-3"
+          name="sourceUrls"
+          placeholder="Source URLs, one per line"
+        />
         <div className="grid gap-3 sm:grid-cols-4">
-          <Input name="city" label="City" />
-          <Input name="state" label="State" />
-          <Input name="rating" label="Rating" placeholder="4.1" />
-          <Input name="reviewCount" label="Reviews" placeholder="42" />
+          <Input name="city" label="City" placeholder="Salt Lake City" />
+          <Input name="state" label="State" defaultValue="UT" />
+          <Input name="nextFollowUpAt" label="Next follow-up" type="datetime-local" />
+          <Input name="industry" label="Industry" defaultValue="HVAC" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input name="rating" label="Rating" placeholder="4.7" />
+          <Input name="reviewCount" label="Reviews" placeholder="86" />
+          <Input name="postalCode" label="Postal code" />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input name="contactName" label="Contact name" />
           <Input name="contactEmail" label="Contact email" />
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm text-muted">
+          <label className="flex items-center gap-2">
+            <input name="callReady" type="checkbox" value="true" />
+            Call ready
+          </label>
+          <label className="flex items-center gap-2 text-danger">
+            <input name="doNotCall" type="checkbox" value="true" />
+            Do not call
+          </label>
         </div>
         <textarea className="ascend-input min-h-20 py-3" name="notes" placeholder="Notes" />
         <Button type="submit">
@@ -348,7 +420,7 @@ function CsvImportPanel() {
           className="ascend-input min-h-40 py-3 font-mono text-xs"
           name="csv"
           placeholder={
-            "Business name,Phone,Website,City,State,Industry\nApex Roofing,602-555-0100,https://example.com,Phoenix,AZ,Roofing"
+            "Business name,Trade,Owner name,Phone,Email,Website,Google Business Profile URL,City,State,Phone verification method,Phone verification source,Phone type,Assigned user\nWasatch Comfort Pros,HVAC,Jamie Smith,801-555-0100,owner@example.com,https://example.com,https://maps.google.com/?cid=123,Salt Lake City,UT,official_company_website,https://example.com/contact,official_company_line,Mahdy"
           }
         />
         <Button type="submit" variant="secondary">
@@ -372,14 +444,41 @@ function LeadReviewPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lead review</CardTitle>
+        <CardTitle>Lead table</CardTitle>
         <CardDescription>
-          Analyze evidence, then convert qualified businesses to prospects.
+          Search, filter, sort, edit, and convert verified leads into the call queue.
         </CardDescription>
       </CardHeader>
+      <form action="/app/sales" className="mb-4 grid gap-3 md:grid-cols-5">
+        <Input name="q" label="Search" placeholder="Business, owner, city, phone" />
+        <Select name="trade" label="Trade">
+          <option value="">All trades</option>
+          {crmTrades.map((trade) => (
+            <option key={trade} value={trade}>
+              {trade}
+            </option>
+          ))}
+        </Select>
+        <Select name="status" label="Status">
+          <option value="">All statuses</option>
+          <option value="call_ready">Call ready</option>
+          <option value="needs_evidence">Needs evidence</option>
+          <option value="do_not_call">Do not call</option>
+        </Select>
+        <Select name="sort" label="Sort" defaultValue="updated">
+          <option value="updated">Recently updated</option>
+          <option value="score">Lead score</option>
+          <option value="name">Business name</option>
+          <option value="follow_up">Next follow-up</option>
+          <option value="last_contacted">Last contacted</option>
+        </Select>
+        <Button className="self-end" type="submit" variant="secondary">
+          Apply
+        </Button>
+      </form>
       <div className="grid gap-3">
         {data.leadBusinesses.length ? (
-          data.leadBusinesses.slice(0, 8).map((lead) => {
+          data.leadBusinesses.slice(0, 50).map((lead) => {
             const analysis = lead.analyses[0];
             return (
               <div className="rounded-md border border-border bg-background/35 p-4" key={lead.id}>
@@ -388,19 +487,45 @@ function LeadReviewPanel({
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base font-semibold">{lead.businessName}</h3>
                       <span className="rounded-sm border border-border px-2 py-1 text-xs text-muted">
-                        {analysis ? label(analysis.classification) : "Not analyzed"}
+                        {lead.trade ?? "No trade"}
                       </span>
+                      <span className="rounded-sm border border-border px-2 py-1 text-xs text-muted">
+                        {lead.leadScore}/100
+                      </span>
+                      {lead.callReady ? (
+                        <span className="rounded-sm border border-primary/40 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                          Call ready
+                        </span>
+                      ) : null}
+                      {lead.doNotCall ? (
+                        <span className="inline-flex items-center gap-1 rounded-sm border border-danger/50 bg-danger/10 px-2 py-1 text-xs font-semibold text-danger">
+                          <AlertTriangle aria-hidden className="h-3 w-3" />
+                          Do not call
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      {[lead.city, lead.state, lead.primaryPhone].filter(Boolean).join(" • ") ||
-                        "No contact details yet"}
+                      {[lead.ownerName, lead.city, lead.state, lead.primaryPhone]
+                        .filter(Boolean)
+                        .join(" • ") || "No contact details yet"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      {label(lead.phoneType)} • {label(lead.phoneVerificationMethod)}
+                      {lead.phoneVerificationSource ? ` • ${lead.phoneVerificationSource}` : ""}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-muted">
                       {analysis?.researchSummary ||
-                        "Run bounded research to score website and fit evidence."}
+                        lead.notes ||
+                        "Add official phone evidence before calling."}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <a
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-surface-raised px-3 text-sm font-semibold text-foreground transition hover:border-border-strong"
+                      href={`/app/sales/leads/${lead.id}`}
+                    >
+                      Detail
+                    </a>
                     {canResearch ? (
                       <form action={analyzeLeadAction}>
                         <input name="leadBusinessId" type="hidden" value={lead.id} />
@@ -409,9 +534,14 @@ function LeadReviewPanel({
                         </Button>
                       </form>
                     ) : null}
-                    {canConvert ? (
+                    {canConvert && lead.callReady && !lead.doNotCall ? (
                       <form action={convertLeadToProspectAction} className="flex gap-2">
                         <input name="leadBusinessId" type="hidden" value={lead.id} />
+                        <input
+                          name="assignedUserId"
+                          type="hidden"
+                          value={lead.assignedUserId ?? ""}
+                        />
                         <input
                           name="priority"
                           type="hidden"
@@ -430,6 +560,110 @@ function LeadReviewPanel({
                     ) : null}
                   </div>
                 </div>
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-primary">
+                    Edit lead
+                  </summary>
+                  <form
+                    action={updateLeadBusinessAction}
+                    className="mt-3 grid gap-3 md:grid-cols-3"
+                  >
+                    <input name="leadBusinessId" type="hidden" value={lead.id} />
+                    <Input name="businessName" label="Business" defaultValue={lead.businessName} />
+                    <Select name="trade" label="Trade" defaultValue={lead.trade ?? "HVAC"}>
+                      {crmTrades.map((trade) => (
+                        <option key={trade} value={trade}>
+                          {trade}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input name="ownerName" label="Owner" defaultValue={lead.ownerName ?? ""} />
+                    <Input
+                      name="primaryPhone"
+                      label="Phone"
+                      defaultValue={lead.primaryPhone ?? ""}
+                    />
+                    <Input name="email" label="Email" defaultValue={lead.email ?? ""} />
+                    <Select name="phoneType" label="Phone type" defaultValue={lead.phoneType}>
+                      {phoneTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {label(type)}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input name="websiteUrl" label="Website" defaultValue={lead.websiteUrl ?? ""} />
+                    <Input
+                      name="googleBusinessProfileUrl"
+                      label="Google Business Profile"
+                      defaultValue={lead.googleBusinessProfileUrl ?? ""}
+                    />
+                    <Select
+                      name="phoneVerificationMethod"
+                      label="Phone evidence"
+                      defaultValue={lead.phoneVerificationMethod}
+                    >
+                      {phoneVerificationMethods.map((method) => (
+                        <option key={method} value={method}>
+                          {label(method)}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input
+                      name="ownerVerificationSource"
+                      label="Owner source"
+                      defaultValue={lead.ownerVerificationSource ?? ""}
+                    />
+                    <Input
+                      name="phoneVerificationSource"
+                      label="Phone source"
+                      defaultValue={lead.phoneVerificationSource ?? ""}
+                    />
+                    <Select
+                      name="assignedUserId"
+                      label="Assigned"
+                      defaultValue={lead.assignedUserId ?? ""}
+                    >
+                      <option value="">Unassigned</option>
+                      {assignmentMembers(data).map((member) => (
+                        <option key={member.userId} value={member.userId}>
+                          {member.user.name ?? member.user.email}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input name="city" label="City" defaultValue={lead.city ?? ""} />
+                    <Input name="state" label="State" defaultValue={lead.state ?? "UT"} />
+                    <Input name="nextFollowUpAt" label="Next follow-up" type="datetime-local" />
+                    <textarea
+                      className="ascend-input min-h-20 py-3 md:col-span-3"
+                      name="sourceUrls"
+                      defaultValue={lead.sourceUrls.join("\n")}
+                    />
+                    <textarea
+                      className="ascend-input min-h-20 py-3 md:col-span-3"
+                      name="notes"
+                      defaultValue={lead.notes ?? ""}
+                    />
+                    <label className="flex items-center gap-2 text-sm text-muted">
+                      <input
+                        name="callReady"
+                        type="checkbox"
+                        value="true"
+                        defaultChecked={lead.callReady}
+                      />
+                      Call ready
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-danger">
+                      <input
+                        name="doNotCall"
+                        type="checkbox"
+                        value="true"
+                        defaultChecked={lead.doNotCall}
+                      />
+                      Do not call
+                    </label>
+                    <Button type="submit">Save lead</Button>
+                  </form>
+                </details>
               </div>
             );
           })
@@ -1091,4 +1325,12 @@ function Empty({ text }: { text: string }) {
 
 function label(value: string) {
   return salesLabelByValue[value] ?? labelize(value);
+}
+
+function assignmentMembers(data: SalesCommandData) {
+  const assigned = data.members.filter((member) => {
+    const name = (member.user.name ?? member.user.email).toLowerCase();
+    return name.includes("mahdy") || name.includes("logan");
+  });
+  return assigned.length ? assigned : data.members;
 }

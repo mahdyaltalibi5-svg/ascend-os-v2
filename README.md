@@ -22,9 +22,11 @@ Manual revenue tracking is active. Stripe is not connected. See `REVENUE_SYSTEM.
 
 ## Sales Operating System
 
-Milestone 3 adds `/app/sales`, the first real Lead Engine, CRM, and Sales Pipeline. It supports manual lead entry, CSV lead import, provider-backed campaign jobs, lead scoring, prospect conversion, sales queue, outreach attempts, follow-ups, appointments, opportunities, pipeline movement, permission-aware CSV exports, and won-opportunity revenue handoff.
+Milestone 1 adds `/app/sales`, the CRM foundation for Mahdy and Logan to work Utah HVAC and plumbing businesses. It supports authentication, dashboard metrics, lead table search/filter/sort, lead detail pages, manual lead creation and editing, CSV import/export, assignment, call history, notes, follow-up tasks, appointments, opportunities, and the requested pipeline board.
 
-Google Places is optional and server-only. If `GOOGLE_PLACES_API_KEY` is not configured, campaigns remain stored but provider launch reports a clear disabled/failure state instead of fake leads. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md`.
+Lead integrity is enforced server-side. Duplicate normalized phone numbers are rejected, similar business names are warned in notes, permanent suppression records keep blocked numbers out of the call queue, and a lead can only become call ready when the phone is verified from the official company website or official Google Business Profile. Owner Direct phone type requires an owner evidence URL and is distinct from Official Company Line.
+
+Google Places is optional and server-only for stored campaign jobs, but scraping is not part of Milestone 1. Twilio, automated SMS, and Google Calendar are intentionally not configured or integrated yet. See `SALES_SYSTEM.md`, `LEAD_PROVIDERS.md`, and `WORKERS.md` for future integration boundaries.
 
 ## Quick Start: Docker PostgreSQL
 
@@ -46,6 +48,7 @@ NEXTAUTH_SECRET="use-a-long-random-development-secret"
 APP_ENV="development"
 GOOGLE_PLACES_API_KEY=""
 SALES_WORKER_SECRET="replace-with-a-long-random-worker-secret"
+CRON_SECRET=""
 ```
 
 Start the database and app:
@@ -92,9 +95,12 @@ DATABASE_URL=
 NEXTAUTH_URL=https://your-vercel-domain.vercel.app
 NEXTAUTH_SECRET=
 APP_ENV=production
+GOOGLE_PLACES_API_KEY=
+SALES_WORKER_SECRET=
+CRON_SECRET=
 ```
 
-Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. After connecting the database, run migrations from a trusted machine or CI:
+Use a real hosted PostgreSQL `DATABASE_URL`. Do not use local Docker URLs in Vercel. `GOOGLE_PLACES_API_KEY`, `SALES_WORKER_SECRET`, and `CRON_SECRET` can remain empty for Milestone 1 unless you intentionally run stored provider jobs later. Do not add Twilio, SMS, scraping, or Google Calendar credentials for this milestone. After connecting the database, run migrations from a trusted machine or CI:
 
 ```bash
 pnpm exec prisma migrate deploy
@@ -108,6 +114,8 @@ The seed command prints these local-only credentials:
 
 - Founder: `founder@ascend.local` / `AscendDev123!`
 - Salesperson: `sales@ascend.local` / `AscendDev123!`
+- Mahdy: `mahdy@ascend.local` / `AscendDev123!`
+- Logan: `logan@ascend.local` / `AscendDev123!`
 
 Never enable these automatically in production.
 

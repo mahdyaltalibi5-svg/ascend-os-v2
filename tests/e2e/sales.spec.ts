@@ -23,12 +23,17 @@ test("founder creates lead, converts prospect, records outreach, books appointme
 
   await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
   await page.getByRole("link", { name: /Sales/ }).click();
-  await expect(page.getByRole("heading", { name: "Lead engine and pipeline" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Utah HVAC and plumbing CRM" })).toBeVisible();
 
   await page.getByLabel("Business name").fill(businessName);
-  await page.getByLabel("Phone").fill("602-555-0100");
-  await page.getByLabel("Website").fill("https://example.com");
-  await page.getByRole("textbox", { name: "Industry" }).fill("Roofing");
+  await page.getByLabel("Owner name").fill("Jamie Smith");
+  await page.getByLabel("Phone", { exact: true }).fill("801-555-0100");
+  await page.getByLabel("Website", { exact: true }).fill("https://example.com");
+  await page.getByLabel("Phone verification source").fill("https://example.com/contact");
+  await page.getByLabel("Phone verification method").selectOption("official_company_website");
+  await page.getByLabel("Phone type").selectOption("official_company_line");
+  await page.getByRole("textbox", { name: "Industry" }).fill("HVAC");
+  await page.getByLabel("Call ready").check();
   await page.getByRole("button", { name: "Add lead" }).click();
   await expect(page.getByText(businessName)).toBeVisible();
 
@@ -52,5 +57,5 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await expect(page.getByText(`${businessName} opportunity`)).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("heading", { name: "Lead engine and pipeline" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Utah HVAC and plumbing CRM" })).toBeVisible();
 });

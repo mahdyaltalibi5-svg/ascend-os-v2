@@ -11,10 +11,14 @@ import { parseMoneyToCents } from "@/lib/revenue/formatting";
 import { getDefaultPipeline } from "@/lib/server/sales";
 import { analyzeWebsite, scoreLead } from "@/lib/sales/scoring";
 import {
+  businessNameSimilarity,
+  canMarkCallReady,
+  crmLeadScore,
   dedupeCandidateKeys,
   escapeCsvFormula,
   normalizeEmail,
-  normalizePhone
+  normalizePhone,
+  normalizeSourceUrls
 } from "@/lib/sales/normalization";
 import {
   followUpForOutcome,
@@ -167,8 +171,21 @@ export async function createManualLeadAction(formData: FormData) {
   const parsed = leadBusinessSchema.parse(Object.fromEntries(formData));
   const lead = await upsertLeadBusiness(context, {
     businessName: parsed.businessName,
+    trade: parsed.trade,
+    ownerName: parsed.ownerName || null,
     phone: parsed.primaryPhone || null,
+    email: parsed.email || null,
     websiteUrl: parsed.websiteUrl || null,
+    googleBusinessProfileUrl: parsed.googleBusinessProfileUrl || null,
+    sourceUrls: parsed.sourceUrls || null,
+    ownerVerificationSource: parsed.ownerVerificationSource || null,
+    phoneVerificationSource: parsed.phoneVerificationSource || null,
+    phoneVerificationMethod: parsed.phoneVerificationMethod,
+    phoneType: parsed.phoneType,
+    assignedUserId: parsed.assignedUserId || null,
+    nextFollowUpAt: parsed.nextFollowUpAt || null,
+    doNotCall: parsed.doNotCall,
+    requestedCallReady: parsed.callReady,
     address: parsed.address || null,
     city: parsed.city || null,
     state: parsed.state || null,
@@ -193,8 +210,91 @@ export async function createManualLeadAction(formData: FormData) {
       }
     });
   }
+  if (lead.doNotCall && lead.normalizedPhone) {
+    await suppressLeadNumber(context, lead, "do_not_call", "lead_create");
+  }
 
-  await audit(context, "sales.lead.created", "LeadBusiness", lead.id, { source: "manual" });
+  await audit(context, "sales.lead.created", "LeadBusiness", lead.id, {
+    source: "manual",
+    callReady: lead.callReady,
+    trade: lead.trade
+  });
+  revalidateSales();
+}
+
+export async function updateLeadBusinessAction(formData: FormData) {
+  const context = await salesContext("leads.manage");
+  const id = String(formData.get("leadBusinessId") ?? "");
+  const existing = await prisma.leadBusiness.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId }
+  });
+  const parsed = leadBusinessSchema.parse(Object.fromEntries(formData));
+  const normalizedPhone = normalizePhone(parsed.primaryPhone);
+  if (normalizedPhone && normalizedPhone !== existing.normalizedPhone) {
+    await assertPhoneAvailable(context.organizationId, normalizedPhone);
+  }
+  const phoneVerificationDate = parsed.phoneVerificationSource
+    ? (existing.phoneVerificationDate ?? new Date())
+    : null;
+  const callReady = canMarkCallReady({
+    normalizedPhone,
+    phoneVerificationMethod: parsed.phoneVerificationMethod,
+    phoneVerificationSource: parsed.phoneVerificationSource
+  });
+  if (parsed.callReady && !callReady)
+    throw new Error("CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE");
+  if (parsed.phoneType === "direct_owner" && !parsed.ownerVerificationSource) {
+    throw new Error("OWNER_DIRECT_REQUIRES_EVIDENCE");
+  }
+  const updated = await prisma.leadBusiness.update({
+    where: { id: existing.id },
+    data: {
+      businessName: parsed.businessName,
+      normalizedBusinessName: normalizeProviderResult({ businessName: parsed.businessName })
+        .normalizedBusinessName,
+      trade: parsed.trade,
+      ownerName: parsed.ownerName || null,
+      primaryPhone: parsed.primaryPhone || null,
+      normalizedPhone,
+      email: normalizeEmail(parsed.email),
+      websiteUrl: parsed.websiteUrl || null,
+      normalizedDomain: normalizeProviderResult({
+        businessName: parsed.businessName,
+        websiteUrl: parsed.websiteUrl
+      }).normalizedDomain,
+      googleBusinessProfileUrl: parsed.googleBusinessProfileUrl || null,
+      sourceUrls: normalizeSourceUrls(parsed.sourceUrls),
+      ownerVerificationSource: parsed.ownerVerificationSource || null,
+      phoneVerificationSource: parsed.phoneVerificationSource || null,
+      phoneVerificationDate,
+      phoneVerificationMethod: parsed.phoneVerificationMethod,
+      phoneType: parsed.phoneType,
+      leadScore: crmLeadScore({
+        trade: parsed.trade,
+        state: parsed.state,
+        normalizedPhone,
+        phoneVerificationMethod: parsed.phoneVerificationMethod,
+        phoneVerificationSource: parsed.phoneVerificationSource,
+        phoneType: parsed.phoneType,
+        ownerName: parsed.ownerName,
+        websiteUrl: parsed.websiteUrl,
+        googleBusinessProfileUrl: parsed.googleBusinessProfileUrl
+      }),
+      assignedUserId: parsed.assignedUserId || null,
+      nextFollowUpAt: parsed.nextFollowUpAt ? new Date(parsed.nextFollowUpAt) : null,
+      doNotCall: parsed.doNotCall,
+      callReady: parsed.doNotCall ? false : callReady,
+      callReadyAt: callReady && !existing.callReady ? new Date() : existing.callReadyAt,
+      notes: parsed.notes || null
+    }
+  });
+  if (updated.doNotCall && updated.normalizedPhone) {
+    await suppressLeadNumber(context, updated, "do_not_call", "lead_update");
+  }
+  await audit(context, "sales.lead.updated", "LeadBusiness", updated.id, {
+    callReady: updated.callReady,
+    phoneType: updated.phoneType
+  });
   revalidateSales();
 }
 
@@ -202,27 +302,77 @@ export async function importLeadsCsvAction(formData: FormData) {
   const context = await salesContext("leads.manage");
   const csv = String(formData.get("csv") ?? "");
   const rows = parseCsv(csv).slice(0, 500);
+  const members = await prisma.organizationMembership.findMany({
+    where: { organizationId: context.organizationId, status: "ACTIVE" },
+    include: { user: true }
+  });
   let created = 0;
   let deduped = 0;
+  let rejected = 0;
 
   for (const row of rows) {
     if (!row["Business name"] && !row["businessName"] && !row["business_name"]) continue;
-    const lead = await upsertLeadBusiness(context, {
-      businessName: cell(row, "Business name", "businessName", "business_name"),
-      phone: cell(row, "Phone", "phone"),
-      websiteUrl: cell(row, "Website", "website"),
-      address: cell(row, "Address", "address"),
-      city: cell(row, "City", "city"),
-      state: cell(row, "State", "state"),
-      postalCode: cell(row, "Postal code", "postalCode", "postal_code"),
-      industry: cell(row, "Industry", "industry"),
-      rating: numberCell(row, "Rating", "rating"),
-      reviewCount: numberCell(row, "Review count", "reviewCount", "review_count"),
-      source: "csv_import",
-      notes: cell(row, "Notes", "notes")
-    });
-    if (lead.createdAt.getTime() + 2000 > Date.now()) created += 1;
-    else deduped += 1;
+    let lead;
+    try {
+      lead = await upsertLeadBusiness(context, {
+        businessName: cell(row, "Business name", "businessName", "business_name"),
+        trade: tradeCell(row),
+        ownerName: cell(row, "Owner name", "ownerName", "owner_name"),
+        phone: cell(row, "Phone", "phone"),
+        email: cell(row, "Email", "email"),
+        websiteUrl: cell(row, "Website", "website"),
+        googleBusinessProfileUrl: cell(
+          row,
+          "Google Business Profile URL",
+          "googleBusinessProfileUrl",
+          "google_business_profile_url",
+          "Google Maps URL"
+        ),
+        sourceUrls: cell(row, "Source URLs", "sourceUrls", "source_urls"),
+        ownerVerificationSource: cell(
+          row,
+          "Owner verification source",
+          "ownerVerificationSource",
+          "owner_verification_source"
+        ),
+        phoneVerificationSource: cell(
+          row,
+          "Phone verification source",
+          "phoneVerificationSource",
+          "phone_verification_source"
+        ),
+        phoneVerificationMethod: verificationMethodCell(row),
+        phoneType: phoneTypeCell(row),
+        assignedUserId: assignedUserCell(context, members, row),
+        doNotCall: boolCell(row, "Do-not-call status", "doNotCall", "do_not_call"),
+        requestedCallReady: boolCell(row, "Call Ready", "callReady", "call_ready"),
+        address: cell(row, "Address", "address"),
+        city: cell(row, "City", "city"),
+        state: cell(row, "State", "state") || "UT",
+        postalCode: cell(row, "Postal code", "postalCode", "postal_code"),
+        industry: cell(row, "Industry", "industry") || tradeCell(row),
+        rating: numberCell(row, "Rating", "rating"),
+        reviewCount: numberCell(row, "Review count", "reviewCount", "review_count"),
+        source: "csv_import",
+        notes: cell(row, "Notes", "notes")
+      });
+      if (lead.createdAt.getTime() + 2000 > Date.now()) created += 1;
+      else deduped += 1;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        [
+          "DUPLICATE_NORMALIZED_PHONE",
+          "SUPPRESSED_NUMBER",
+          "CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE",
+          "OWNER_DIRECT_REQUIRES_EVIDENCE"
+        ].includes(error.message)
+      ) {
+        rejected += 1;
+        continue;
+      }
+      throw error;
+    }
     const contactName = cell(row, "Contact name", "contactName", "contact_name");
     const contactEmail = cell(row, "Contact email", "contactEmail", "contact_email");
     if (contactName || contactEmail) {
@@ -241,7 +391,8 @@ export async function importLeadsCsvAction(formData: FormData) {
   await audit(context, "sales.csv_import", "LeadBusiness", null, {
     rows: rows.length,
     created,
-    deduped
+    deduped,
+    rejected
   });
   revalidateSales();
 }
@@ -309,6 +460,9 @@ export async function convertLeadToProspectAction(formData: FormData) {
     where: { organizationId: context.organizationId, leadBusinessId: lead.id, archivedAt: null }
   });
   if (existing) throw new Error("DUPLICATE_ACTIVE_PROSPECT");
+  if (!lead.callReady) throw new Error("CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE");
+  if (lead.doNotCall) throw new Error("LEAD_DO_NOT_CALL");
+  await assertNumberNotSuppressed(context.organizationId, lead.normalizedPhone, "phone");
   const firstFollowUp = parsed.firstFollowUpDate
     ? new Date(`${parsed.firstFollowUpDate}T16:00:00.000Z`)
     : null;
@@ -322,11 +476,11 @@ export async function convertLeadToProspectAction(formData: FormData) {
         status: parsed.assignedUserId ? "assigned" : "ready",
         priority: parsed.priority,
         leadSource: lead.source,
+        nextActionAt: firstFollowUp ?? lead.nextFollowUpAt,
+        nextActionType: firstFollowUp || lead.nextFollowUpAt ? "call" : null,
         estimatedValueCents: optionalCents(parsed.estimatedValue),
         recommendedService:
           parsed.recommendedService || lead.analyses[0]?.recommendedService || null,
-        nextActionAt: firstFollowUp,
-        nextActionType: firstFollowUp ? "call" : null,
         notes: parsed.notes || null
       }
     });
@@ -406,6 +560,7 @@ export async function recordOutreachAttemptAction(formData: FormData) {
         noAnswerCount: parsed.outcome === "no_answer" ? { increment: 1 } : undefined,
         conversationCount: [
           "owner_conversation",
+          "full_pitch",
           "interested",
           "callback_requested",
           "appointment_booked"
@@ -414,6 +569,15 @@ export async function recordOutreachAttemptAction(formData: FormData) {
           : undefined,
         nextActionAt: followUp?.dueAt ?? null,
         nextActionType: followUp?.type ?? null
+      }
+    });
+    await tx.leadBusiness.update({
+      where: { id: prospect.leadBusinessId },
+      data: {
+        lastContactedAt: startedAt,
+        nextFollowUpAt: followUp?.dueAt ?? null,
+        doNotCall: parsed.outcome === "do_not_contact" ? true : prospect.leadBusiness.doNotCall,
+        callReady: parsed.outcome === "wrong_number" ? false : prospect.leadBusiness.callReady
       }
     });
     if (followUp) {
@@ -432,6 +596,14 @@ export async function recordOutreachAttemptAction(formData: FormData) {
     }
     return created;
   });
+  if (parsed.outcome === "wrong_number" || parsed.outcome === "do_not_contact") {
+    await suppressLeadNumber(
+      context,
+      prospect.leadBusiness,
+      parsed.outcome === "wrong_number" ? "wrong_person" : "do_not_call",
+      "outreach_disposition"
+    );
+  }
 
   await audit(context, "sales.outreach.recorded", "OutreachAttempt", attempt.id, {
     prospectId: prospect.id,
@@ -487,7 +659,7 @@ export async function createAppointmentAction(formData: FormData) {
   const prospect = await assertProspectAccess(context, parsed.prospectId, "manage");
   const pipeline = await getDefaultPipeline(context.organizationId);
   const appointmentStage =
-    pipeline.stages.find((stage) => stage.name === "Appointment booked") ?? pipeline.stages[0];
+    pipeline.stages.find((stage) => stage.name === "Appointment Booked") ?? pipeline.stages[0];
   const startAt = new Date(parsed.startAt);
   const endAt = new Date(parsed.endAt);
   if (endAt <= startAt) throw new Error("INVALID_APPOINTMENT_RANGE");
@@ -709,23 +881,60 @@ export async function createRevenueHandoffAction(formData: FormData) {
 export async function createSuppressionAction(formData: FormData) {
   const context = await anySalesContext(["prospects.manage_all", "prospects.manage_own"]);
   const parsed = suppressionSchema.parse(Object.fromEntries(formData));
-  const suppression = await prisma.contactSuppression.create({
-    data: {
-      organizationId: context.organizationId,
-      prospectId: parsed.prospectId || null,
-      leadBusinessId: parsed.leadBusinessId || null,
-      phone: normalizePhone(parsed.phone),
-      email: normalizeEmail(parsed.email),
-      channel: parsed.channel,
-      reason: parsed.reason,
-      source: parsed.source,
-      createdById: context.userId
-    }
-  });
+  const lead = parsed.leadBusinessId
+    ? await prisma.leadBusiness.findFirst({
+        where: { id: parsed.leadBusinessId, organizationId: context.organizationId }
+      })
+    : null;
+  const suppressionPhone = normalizePhone(parsed.phone) ?? lead?.normalizedPhone ?? null;
+  const suppressionData = {
+    organizationId: context.organizationId,
+    prospectId: parsed.prospectId || null,
+    leadBusinessId: parsed.leadBusinessId || null,
+    businessName: lead?.businessName ?? null,
+    normalizedBusinessName: lead?.normalizedBusinessName ?? null,
+    phone: suppressionPhone,
+    email: normalizeEmail(parsed.email),
+    channel: parsed.channel,
+    reason: parsed.reason,
+    source: parsed.source,
+    permanent: true,
+    createdById: context.userId
+  };
+  const suppression = suppressionPhone
+    ? await prisma.contactSuppression.upsert({
+        where: {
+          organizationId_phone_channel: {
+            organizationId: context.organizationId,
+            phone: suppressionPhone,
+            channel: parsed.channel
+          }
+        },
+        update: {
+          reason: parsed.reason,
+          source: parsed.source,
+          permanent: true,
+          expiresAt: null
+        },
+        create: suppressionData
+      })
+    : await prisma.contactSuppression.create({ data: suppressionData });
   if (parsed.prospectId) {
     await prisma.prospect.updateMany({
       where: { id: parsed.prospectId, organizationId: context.organizationId },
       data: { status: parsed.reason === "duplicate" ? "archived" : "do_not_contact" }
+    });
+  }
+  if (parsed.leadBusinessId || lead) {
+    const leadFilters: Prisma.LeadBusinessWhereInput[] = [];
+    if (parsed.leadBusinessId) leadFilters.push({ id: parsed.leadBusinessId });
+    if (suppression.phone) leadFilters.push({ normalizedPhone: suppression.phone });
+    await prisma.leadBusiness.updateMany({
+      where: {
+        organizationId: context.organizationId,
+        OR: leadFilters
+      },
+      data: { doNotCall: parsed.reason === "do_not_call", callReady: false }
     });
   }
   await audit(context, "sales.suppression.created", "ContactSuppression", suppression.id, {
@@ -878,9 +1087,43 @@ export async function processSalesJobs(limit = 3) {
 
 async function upsertLeadBusiness(
   context: Pick<SalesContext, "organizationId">,
-  input: ProviderLeadResult & { industry?: string | null; source?: string; notes?: string | null }
+  input: ProviderLeadResult & {
+    trade?: string | null;
+    ownerName?: string | null;
+    email?: string | null;
+    googleBusinessProfileUrl?: string | null;
+    sourceUrls?: string | null;
+    ownerVerificationSource?: string | null;
+    phoneVerificationSource?: string | null;
+    phoneVerificationMethod?: string | null;
+    phoneType?: string | null;
+    assignedUserId?: string | null;
+    nextFollowUpAt?: string | null;
+    doNotCall?: boolean;
+    requestedCallReady?: boolean;
+    industry?: string | null;
+    source?: string;
+    notes?: string | null;
+  }
 ) {
   const normalized = normalizeProviderResult(input);
+  if (normalized.normalizedPhone) {
+    await assertPhoneAvailable(context.organizationId, normalized.normalizedPhone);
+    await assertNumberNotSuppressed(context.organizationId, normalized.normalizedPhone, "phone");
+  }
+  const phoneVerificationMethod = input.phoneVerificationMethod ?? "unverified";
+  const phoneVerificationSource = input.phoneVerificationSource?.trim() || null;
+  const callReady = canMarkCallReady({
+    normalizedPhone: normalized.normalizedPhone,
+    phoneVerificationMethod,
+    phoneVerificationSource
+  });
+  if (input.requestedCallReady && !callReady) {
+    throw new Error("CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE");
+  }
+  if (input.phoneType === "direct_owner" && !input.ownerVerificationSource) {
+    throw new Error("OWNER_DIRECT_REQUIRES_EVIDENCE");
+  }
   const keys = dedupeCandidateKeys({
     googlePlaceId: normalized.googlePlaceId,
     normalizedPhone: normalized.normalizedPhone,
@@ -892,16 +1135,24 @@ async function upsertLeadBusiness(
     postalCode: input.postalCode
   });
   const existing = await findDuplicateLead(context.organizationId, normalized, keys);
+  const similarNameWarning = await similarBusinessNameWarning(
+    context.organizationId,
+    input.businessName
+  );
   const data = {
     businessName: input.businessName,
     normalizedBusinessName: normalized.normalizedBusinessName,
+    trade: input.trade || tradeFromIndustry(input.industry),
+    ownerName: input.ownerName || null,
     primaryPhone: input.phone || null,
     normalizedPhone: normalized.normalizedPhone,
+    email: normalizeEmail(input.email),
     websiteUrl: input.websiteUrl || null,
     normalizedDomain: normalized.normalizedDomain,
+    googleBusinessProfileUrl: input.googleBusinessProfileUrl || input.googleMapsUrl || null,
     address: input.address || null,
     city: input.city || null,
-    state: input.state || null,
+    state: input.state || "UT",
     postalCode: input.postalCode || null,
     country: input.country || "United States",
     latitude: decimalOrNull(input.latitude),
@@ -914,16 +1165,69 @@ async function upsertLeadBusiness(
     businessStatus: input.businessStatus || null,
     source: input.source || "manual",
     sourceRecordId: input.sourceRecordId || input.googlePlaceId || null,
+    sourceUrls: normalizeSourceUrls(input.sourceUrls),
     notes: input.notes || null
   };
   if (existing) {
+    if (existing.normalizedPhone && existing.normalizedPhone === normalized.normalizedPhone) {
+      throw new Error("DUPLICATE_NORMALIZED_PHONE");
+    }
     return prisma.leadBusiness.update({
       where: { id: existing.id },
-      data
+      data: {
+        ...data,
+        ownerVerificationSource: input.ownerVerificationSource || null,
+        phoneVerificationSource,
+        phoneVerificationDate: phoneVerificationSource ? new Date() : null,
+        phoneVerificationMethod,
+        phoneType: input.phoneType || "unknown",
+        leadScore: crmLeadScore({
+          trade: input.trade,
+          state: input.state || "UT",
+          normalizedPhone: normalized.normalizedPhone,
+          phoneVerificationMethod,
+          phoneVerificationSource,
+          phoneType: input.phoneType,
+          ownerName: input.ownerName,
+          websiteUrl: input.websiteUrl,
+          googleBusinessProfileUrl: input.googleBusinessProfileUrl || input.googleMapsUrl
+        }),
+        assignedUserId: input.assignedUserId || null,
+        nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
+        doNotCall: Boolean(input.doNotCall),
+        callReady: Boolean(!input.doNotCall && callReady),
+        callReadyAt: callReady ? new Date() : null,
+        notes: [data.notes, similarNameWarning].filter(Boolean).join("\n") || null
+      }
     });
   }
   return prisma.leadBusiness.create({
-    data: { organizationId: context.organizationId, ...data }
+    data: {
+      organizationId: context.organizationId,
+      ...data,
+      ownerVerificationSource: input.ownerVerificationSource || null,
+      phoneVerificationSource,
+      phoneVerificationDate: phoneVerificationSource ? new Date() : null,
+      phoneVerificationMethod,
+      phoneType: input.phoneType || "unknown",
+      leadScore: crmLeadScore({
+        trade: input.trade,
+        state: input.state || "UT",
+        normalizedPhone: normalized.normalizedPhone,
+        phoneVerificationMethod,
+        phoneVerificationSource,
+        phoneType: input.phoneType,
+        ownerName: input.ownerName,
+        websiteUrl: input.websiteUrl,
+        googleBusinessProfileUrl: input.googleBusinessProfileUrl || input.googleMapsUrl
+      }),
+      assignedUserId: input.assignedUserId || null,
+      nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
+      doNotCall: Boolean(input.doNotCall),
+      callReady: Boolean(!input.doNotCall && callReady),
+      callReadyAt: callReady ? new Date() : null,
+      notes: [data.notes, similarNameWarning].filter(Boolean).join("\n") || null
+    }
   });
 }
 
@@ -944,6 +1248,148 @@ async function findDuplicateLead(
   }
   if (!or.length) return null;
   return prisma.leadBusiness.findFirst({ where: { organizationId, OR: or } });
+}
+
+async function assertPhoneAvailable(organizationId: string, normalizedPhone: string) {
+  const existing = await prisma.leadBusiness.findFirst({
+    where: { organizationId, normalizedPhone, archivedAt: null },
+    select: { id: true }
+  });
+  if (existing) throw new Error("DUPLICATE_NORMALIZED_PHONE");
+}
+
+async function assertNumberNotSuppressed(
+  organizationId: string,
+  normalizedPhone: string | null,
+  channel: string
+) {
+  if (!normalizedPhone) return;
+  const suppression = await prisma.contactSuppression.findFirst({
+    where: {
+      organizationId,
+      phone: normalizedPhone,
+      permanent: true,
+      OR: [{ channel }, { channel: "all" }]
+    }
+  });
+  if (suppression) throw new Error("SUPPRESSED_NUMBER");
+}
+
+async function similarBusinessNameWarning(organizationId: string, businessName: string) {
+  const normalizedBusinessName = normalizeProviderResult({ businessName }).normalizedBusinessName;
+  const candidates = await prisma.leadBusiness.findMany({
+    where: {
+      organizationId,
+      archivedAt: null,
+      normalizedBusinessName: {
+        contains: normalizedBusinessName.split(" ")[0] || normalizedBusinessName
+      }
+    },
+    select: { businessName: true },
+    take: 12
+  });
+  const match = candidates.find(
+    (candidate) => businessNameSimilarity(candidate.businessName, businessName) >= 0.72
+  );
+  return match ? `Warning: similar business name already exists (${match.businessName}).` : null;
+}
+
+function tradeFromIndustry(industry?: string | null) {
+  const value = industry?.toLowerCase() ?? "";
+  if (value.includes("plumb")) return "Plumbing";
+  if (value.includes("hvac") || value.includes("heating") || value.includes("cooling"))
+    return "HVAC";
+  return null;
+}
+
+function tradeCell(row: Record<string, string>) {
+  const raw = cell(row, "Trade", "trade", "Industry", "industry");
+  return tradeFromIndustry(raw) ?? (raw.toLowerCase().includes("plumb") ? "Plumbing" : "HVAC");
+}
+
+function verificationMethodCell(row: Record<string, string>) {
+  const raw = cell(
+    row,
+    "Phone verification method",
+    "phoneVerificationMethod",
+    "phone_verification_method"
+  )
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+  if (raw.includes("google")) return "official_google_business_profile";
+  if (raw.includes("website") || raw.includes("company_site")) return "official_company_website";
+  if (raw === "other") return "other";
+  return "unverified";
+}
+
+function phoneTypeCell(row: Record<string, string>) {
+  const raw = cell(row, "Phone type", "phoneType", "phone_type")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+  if (raw.includes("owner") && raw.includes("direct")) return "direct_owner";
+  if (raw.includes("official") || raw.includes("company")) return "official_company_line";
+  if (raw.includes("office")) return "office_line";
+  return "unknown";
+}
+
+function boolCell(row: Record<string, string>, ...keys: string[]) {
+  return ["true", "yes", "1", "y"].includes(
+    cell(row, ...keys)
+      .trim()
+      .toLowerCase()
+  );
+}
+
+function assignedUserCell(
+  context: SalesContext,
+  members: Array<{ userId: string; user: { name: string | null; email: string } }>,
+  row: Record<string, string>
+) {
+  const raw = cell(row, "Assigned user", "assignedUser", "assigned_user").trim().toLowerCase();
+  if (!raw) return null;
+  const member = members.find((item) => {
+    const name = item.user.name?.toLowerCase() ?? "";
+    const email = item.user.email.toLowerCase();
+    return name === raw || email === raw || email.startsWith(`${raw}@`);
+  });
+  if (member) return member.userId;
+  return raw === "me" ? context.userId : raw;
+}
+
+async function suppressLeadNumber(
+  context: Pick<SalesContext, "organizationId" | "userId">,
+  lead: {
+    id: string;
+    businessName: string;
+    normalizedBusinessName: string;
+    normalizedPhone: string | null;
+  },
+  reason: string,
+  source: string
+) {
+  if (!lead.normalizedPhone) return null;
+  return prisma.contactSuppression.upsert({
+    where: {
+      organizationId_phone_channel: {
+        organizationId: context.organizationId,
+        phone: lead.normalizedPhone,
+        channel: "phone"
+      }
+    },
+    update: { reason, source, permanent: true, expiresAt: null },
+    create: {
+      organizationId: context.organizationId,
+      leadBusinessId: lead.id,
+      businessName: lead.businessName,
+      normalizedBusinessName: lead.normalizedBusinessName,
+      phone: lead.normalizedPhone,
+      channel: "phone",
+      reason,
+      source,
+      permanent: true,
+      createdById: context.userId
+    }
+  });
 }
 
 async function assertProspectAccess(
@@ -998,6 +1444,7 @@ async function assertNotSuppressed(organizationId: string, prospectId: string, c
   const phone = normalizePhone(
     prospect.primaryContact?.phone || prospect.leadBusiness.primaryPhone
   );
+  if (prospect.leadBusiness.doNotCall) throw new Error("CONTACT_SUPPRESSED");
   const email = normalizeEmail(prospect.primaryContact?.email);
   const matches: Prisma.ContactSuppressionWhereInput[] = [
     { prospectId },

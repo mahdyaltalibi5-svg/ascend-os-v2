@@ -43,6 +43,30 @@ async function main() {
     }
   });
 
+  const mahdy = await prisma.user.upsert({
+    where: { normalizedEmail: "mahdy@ascend.local" },
+    update: { name: "Mahdy", passwordHash },
+    create: {
+      name: "Mahdy",
+      email: "mahdy@ascend.local",
+      normalizedEmail: "mahdy@ascend.local",
+      passwordHash,
+      emailVerified: new Date()
+    }
+  });
+
+  const logan = await prisma.user.upsert({
+    where: { normalizedEmail: "logan@ascend.local" },
+    update: { name: "Logan", passwordHash },
+    create: {
+      name: "Logan",
+      email: "logan@ascend.local",
+      normalizedEmail: "logan@ascend.local",
+      passwordHash,
+      emailVerified: new Date()
+    }
+  });
+
   for (const [key, description] of Object.entries(permissionDescriptions)) {
     await prisma.permission.upsert({
       where: { key },
@@ -136,6 +160,18 @@ async function main() {
     create: { organizationId: organization.id, userId: salesperson.id, status: "ACTIVE" }
   });
 
+  const mahdyMembership = await prisma.organizationMembership.upsert({
+    where: { organizationId_userId: { organizationId: organization.id, userId: mahdy.id } },
+    update: { status: "ACTIVE" },
+    create: { organizationId: organization.id, userId: mahdy.id, status: "ACTIVE" }
+  });
+
+  const loganMembership = await prisma.organizationMembership.upsert({
+    where: { organizationId_userId: { organizationId: organization.id, userId: logan.id } },
+    update: { status: "ACTIVE" },
+    create: { organizationId: organization.id, userId: logan.id, status: "ACTIVE" }
+  });
+
   await prisma.membershipRole.upsert({
     where: { membershipId_roleId: { membershipId: founderMembership.id, roleId: founderRole.id } },
     update: {},
@@ -150,7 +186,17 @@ async function main() {
     create: { membershipId: salespersonMembership.id, roleId: salespersonRole.id }
   });
 
-  for (const user of [founder, salesperson]) {
+  for (const membership of [mahdyMembership, loganMembership]) {
+    await prisma.membershipRole.upsert({
+      where: {
+        membershipId_roleId: { membershipId: membership.id, roleId: salespersonRole.id }
+      },
+      update: {},
+      create: { membershipId: membership.id, roleId: salespersonRole.id }
+    });
+  }
+
+  for (const user of [founder, salesperson, mahdy, logan]) {
     await prisma.notificationPreference.upsert({
       where: { organizationId_userId: { organizationId: organization.id, userId: user.id } },
       update: {},
@@ -200,6 +246,8 @@ async function main() {
   console.log("Seeded Ascend OS development data.");
   console.log("Founder: founder@ascend.local / AscendDev123!");
   console.log("Salesperson: sales@ascend.local / AscendDev123!");
+  console.log("Mahdy: mahdy@ascend.local / AscendDev123!");
+  console.log("Logan: logan@ascend.local / AscendDev123!");
 }
 
 async function assignPermissions(roleId: string, permissions: PermissionKey[]) {
@@ -278,6 +326,13 @@ async function seedSalesDefaults(organizationId: string) {
       }
     });
   }
+
+  await prisma.pipelineStage.deleteMany({
+    where: {
+      pipelineId: pipeline.id,
+      name: { notIn: defaultPipelineStages.map(([name]) => name) }
+    }
+  });
 
   const now = new Date();
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));

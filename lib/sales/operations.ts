@@ -14,6 +14,9 @@ type QueueProspect = {
     rating: unknown;
     state: string | null;
     city: string | null;
+    normalizedPhone: string | null;
+    callReady: boolean;
+    doNotCall: boolean;
   };
   leadBusinessId: string;
 };
@@ -32,6 +35,7 @@ export function queueRank(prospect: QueueProspect, now = new Date()) {
   ) {
     return -1;
   }
+  if (!prospect.leadBusiness.callReady || prospect.leadBusiness.doNotCall) return -1;
   if (prospect.noAnswerCount >= 3 && !prospect.nextActionAt) return -1;
 
   let score = 0;
@@ -66,7 +70,7 @@ export function rankQueue<T extends QueueProspect>(prospects: T[], now = new Dat
 
 export function prospectStatusAfterOutcome(outcome: string) {
   if (outcome === "appointment_booked") return "appointment_booked";
-  if (["owner_conversation", "interested", "callback_requested"].includes(outcome))
+  if (["owner_conversation", "full_pitch", "interested", "callback_requested"].includes(outcome))
     return "connected";
   if (["not_interested", "bad_fit"].includes(outcome)) return "unqualified";
   if (outcome === "do_not_contact") return "do_not_contact";
@@ -127,7 +131,7 @@ export function weightedValue(estimatedValueCents: number, probabilityPercent: n
 }
 
 export function calculateSalesMetrics(input: {
-  attempts: Array<{ outcome: string; startedAt: Date; userId: string | null }>;
+  attempts: Array<{ channel: string; outcome: string; startedAt: Date; userId: string | null }>;
   appointments: Array<{ status: string; startAt: Date }>;
   opportunities: Array<{
     status: string;
@@ -137,10 +141,25 @@ export function calculateSalesMetrics(input: {
   }>;
 }) {
   const attempts = input.attempts.length;
+  const answers = input.attempts.filter(
+    (attempt) => !["no_answer", "voicemail", "failed"].includes(attempt.outcome)
+  ).length;
   const conversations = input.attempts.filter((attempt) =>
-    ["owner_conversation", "interested", "callback_requested", "appointment_booked"].includes(
+    [
+      "owner_conversation",
+      "full_pitch",
+      "interested",
+      "callback_requested",
+      "appointment_booked"
+    ].includes(attempt.outcome)
+  ).length;
+  const ownersReached = input.attempts.filter((attempt) =>
+    ["owner_conversation", "full_pitch", "interested", "appointment_booked"].includes(
       attempt.outcome
     )
+  ).length;
+  const fullPitches = input.attempts.filter((attempt) =>
+    ["full_pitch", "interested", "appointment_booked"].includes(attempt.outcome)
   ).length;
   const appointmentsBooked = input.attempts.filter(
     (attempt) => attempt.outcome === "appointment_booked"
@@ -161,9 +180,14 @@ export function calculateSalesMetrics(input: {
 
   return {
     attempts,
+    dialsToday: input.attempts.filter((attempt) => attempt.channel === "phone").length,
+    answers,
     conversations,
+    ownersReached,
+    fullPitches,
     conversationRate: ratio(conversations, attempts),
     appointmentsBooked,
+    meetingsBooked: appointmentsBooked,
     bookingRate: ratio(appointmentsBooked, conversations),
     appointmentsHeld,
     showRate: ratio(appointmentsHeld, appointmentsHeld + noShows),

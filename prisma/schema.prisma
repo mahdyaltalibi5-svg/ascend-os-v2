@@ -775,48 +775,69 @@ model LeadCampaign {
 }
 
 model LeadBusiness {
-  id                      String                   @id @default(cuid())
-  organizationId          String
-  businessName            String
-  normalizedBusinessName  String
-  primaryPhone            String?
-  normalizedPhone         String?
-  websiteUrl              String?
-  normalizedDomain        String?
-  address                 String?
-  city                    String?
-  state                   String?
-  postalCode              String?
-  country                 String                   @default("United States")
-  latitude                Decimal?                 @db.Decimal(10, 7)
-  longitude               Decimal?                 @db.Decimal(10, 7)
-  industry                String?
-  subIndustry             String?
-  googlePlaceId           String?
-  googleMapsUrl           String?
-  rating                  Decimal?                 @db.Decimal(3, 2)
-  reviewCount             Int?
-  businessStatus          String?
-  source                  String                   @default("manual")
-  sourceRecordId          String?
-  franchiseStatus         String?
-  ownerOperatedLikelihood Int?
-  estimatedCompanySize    String?
-  notes                   String?
-  archivedAt              DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  organization            Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contacts                LeadContact[]
-  campaignMemberships     LeadCampaignMembership[]
-  analyses                LeadAnalysis[]
-  prospects               Prospect[]
-  suppressions            ContactSuppression[]
+  id                       String                   @id @default(cuid())
+  organizationId           String
+  businessName             String
+  normalizedBusinessName   String
+  trade                    String?
+  ownerName                String?
+  primaryPhone             String?
+  normalizedPhone          String?
+  email                    String?
+  websiteUrl               String?
+  normalizedDomain         String?
+  googleBusinessProfileUrl String?
+  address                  String?
+  city                     String?
+  state                    String?
+  postalCode               String?
+  country                  String                   @default("United States")
+  latitude                 Decimal?                 @db.Decimal(10, 7)
+  longitude                Decimal?                 @db.Decimal(10, 7)
+  industry                 String?
+  subIndustry              String?
+  googlePlaceId            String?
+  googleMapsUrl            String?
+  rating                   Decimal?                 @db.Decimal(3, 2)
+  reviewCount              Int?
+  businessStatus           String?
+  source                   String                   @default("manual")
+  sourceRecordId           String?
+  franchiseStatus          String?
+  ownerOperatedLikelihood  Int?
+  estimatedCompanySize     String?
+  sourceUrls               String[]                 @default([])
+  ownerVerificationSource  String?
+  phoneVerificationSource  String?
+  phoneVerificationDate    DateTime?
+  phoneVerificationMethod  String                   @default("unverified")
+  phoneType                String                   @default("unknown")
+  leadScore                Int                      @default(0)
+  assignedUserId           String?
+  lastContactedAt          DateTime?
+  nextFollowUpAt           DateTime?
+  doNotCall                Boolean                  @default(false)
+  callReady                Boolean                  @default(false)
+  callReadyAt              DateTime?
+  notes                    String?
+  archivedAt               DateTime?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  organization             Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts                 LeadContact[]
+  campaignMemberships      LeadCampaignMembership[]
+  analyses                 LeadAnalysis[]
+  prospects                Prospect[]
+  suppressions             ContactSuppression[]
 
   @@unique([organizationId, googlePlaceId])
+  @@unique([organizationId, normalizedPhone])
   @@index([organizationId, normalizedPhone])
   @@index([organizationId, normalizedDomain])
   @@index([organizationId, normalizedBusinessName, address])
+  @@index([organizationId, trade, city, state])
+  @@index([organizationId, assignedUserId, callReady])
+  @@index([organizationId, doNotCall])
   @@index([organizationId, industry, city, state])
   @@index([organizationId, archivedAt])
 }
@@ -1128,24 +1149,29 @@ model SalesGoal {
 }
 
 model ContactSuppression {
-  id             String        @id @default(cuid())
-  organizationId String
-  phone          String?
-  email          String?
-  leadBusinessId String?
-  prospectId     String?
-  channel        String
-  reason         String
-  source         String        @default("manual")
-  createdById    String?
-  expiresAt      DateTime?
-  createdAt      DateTime      @default(now())
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  leadBusiness   LeadBusiness? @relation(fields: [leadBusinessId], references: [id], onDelete: SetNull)
-  prospect       Prospect?     @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  id                     String        @id @default(cuid())
+  organizationId         String
+  phone                  String?
+  email                  String?
+  businessName           String?
+  normalizedBusinessName String?
+  leadBusinessId         String?
+  prospectId             String?
+  channel                String
+  reason                 String
+  source                 String        @default("manual")
+  permanent              Boolean       @default(true)
+  createdById            String?
+  expiresAt              DateTime?
+  createdAt              DateTime      @default(now())
+  organization           Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leadBusiness           LeadBusiness? @relation(fields: [leadBusinessId], references: [id], onDelete: SetNull)
+  prospect               Prospect?     @relation(fields: [prospectId], references: [id], onDelete: SetNull)
 
+  @@unique([organizationId, phone, channel])
   @@index([organizationId, phone, channel])
   @@index([organizationId, email, channel])
+  @@index([organizationId, normalizedBusinessName])
   @@index([organizationId, leadBusinessId])
   @@index([organizationId, prospectId])
 }
