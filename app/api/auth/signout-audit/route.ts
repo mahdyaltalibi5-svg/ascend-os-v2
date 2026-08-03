@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/server/auth";
 import { writeAuditEvent } from "@/lib/server/audit";
 
-export async function POST() {
+async function handleSignOut(request: Request) {
   const session = await getCurrentSession();
 
   if (session?.user?.id) {
@@ -15,5 +15,24 @@ export async function POST() {
     });
   }
 
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.redirect(new URL("/signin", request.url), { status: 303 });
+  for (const cookieName of [
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+    "next-auth.callback-url",
+    "__Secure-next-auth.callback-url",
+    "next-auth.csrf-token",
+    "__Host-next-auth.csrf-token"
+  ]) {
+    response.cookies.set(cookieName, "", { maxAge: 0, path: "/" });
+  }
+  return response;
+}
+
+export async function GET(request: Request) {
+  return handleSignOut(request);
+}
+
+export async function POST(request: Request) {
+  return handleSignOut(request);
 }

@@ -62,7 +62,12 @@ export function OnboardingForm() {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+    <form
+      action="/api/organization"
+      className="grid gap-4"
+      method="post"
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
       <Input label="Organization name" {...form.register("name")} />
       <Input label="Website" placeholder="https://example.com" {...form.register("website")} />
       <Select label="Timezone" {...form.register("timezone")}>

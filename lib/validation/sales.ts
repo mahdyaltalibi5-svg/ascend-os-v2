@@ -17,12 +17,24 @@ import {
   salesGoalMetrics,
   suppressionReasons
 } from "@/lib/sales/constants";
+import { normalizePhone } from "@/lib/sales/normalization";
 
 const optionalShort = z.string().trim().max(180).optional().or(z.literal(""));
 const optionalText = z.string().trim().max(2000).optional().or(z.literal(""));
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const dateTimeString = z.string().min(10).max(40);
 const moneyString = z.string().trim().max(32).optional().or(z.literal(""));
+const requiredPhone = z
+  .string()
+  .trim()
+  .min(7, "Phone number is required.")
+  .max(180)
+  .refine((value) => Boolean(normalizePhone(value)), "Enter a valid phone number.");
+const utState = z
+  .string()
+  .trim()
+  .transform((value) => value.toUpperCase())
+  .refine((value) => value === "UT", "Milestone 1 only supports Utah leads.");
 
 export const leadCampaignSchema = z.object({
   name: z.string().trim().min(2).max(140),
@@ -53,7 +65,7 @@ export const leadBusinessSchema = z.object({
   businessName: z.string().trim().min(2).max(180),
   trade: z.enum(crmTrades).default("HVAC"),
   ownerName: optionalShort,
-  primaryPhone: optionalShort,
+  primaryPhone: requiredPhone,
   email: z.string().trim().email().optional().or(z.literal("")),
   websiteUrl: optionalShort,
   googleBusinessProfileUrl: optionalShort,
@@ -68,7 +80,7 @@ export const leadBusinessSchema = z.object({
   callReady: z.coerce.boolean().default(false),
   address: optionalShort,
   city: optionalShort,
-  state: optionalShort.default("UT"),
+  state: utState.default("UT"),
   postalCode: optionalShort,
   country: z.string().trim().max(80).default("United States"),
   industry: optionalShort,

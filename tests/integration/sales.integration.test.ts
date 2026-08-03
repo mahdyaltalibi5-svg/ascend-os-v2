@@ -110,6 +110,36 @@ describeSales("sales database workflows", () => {
       })
     ).rejects.toThrow();
 
+    const racingPhone = normalizePhone("801-555-0199");
+    const racingWrites = await Promise.allSettled([
+      prisma.leadBusiness.create({
+        data: {
+          organizationId: orgA.id,
+          businessName: "Concurrent HVAC One",
+          normalizedBusinessName: normalizeBusinessName("Concurrent HVAC One"),
+          trade: "HVAC",
+          primaryPhone: "801-555-0199",
+          normalizedPhone: racingPhone,
+          state: "UT",
+          source: "manual"
+        }
+      }),
+      prisma.leadBusiness.create({
+        data: {
+          organizationId: orgA.id,
+          businessName: "Concurrent HVAC Two",
+          normalizedBusinessName: normalizeBusinessName("Concurrent HVAC Two"),
+          trade: "HVAC",
+          primaryPhone: "(801) 555-0199",
+          normalizedPhone: racingPhone,
+          state: "UT",
+          source: "manual"
+        }
+      })
+    ]);
+    expect(racingWrites.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(racingWrites.filter((result) => result.status === "rejected")).toHaveLength(1);
+
     const analysis = await prisma.leadAnalysis.create({
       data: {
         organizationId: orgA.id,
@@ -248,6 +278,20 @@ describeSales("sales database workflows", () => {
         permanent: true
       }
     });
+    await expect(
+      prisma.contactSuppression.create({
+        data: {
+          organizationId: orgA.id,
+          leadBusinessId: lead.id,
+          businessName: lead.businessName,
+          normalizedBusinessName: lead.normalizedBusinessName,
+          phone: normalizePhone("(801) 555-0100"),
+          channel: "phone",
+          reason: "wrong_person",
+          permanent: true
+        }
+      })
+    ).rejects.toThrow();
     const crossOrgProspectLookup = await prisma.prospect.findFirst({
       where: { id: prospect.id, organizationId: orgB.id }
     });

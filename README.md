@@ -54,7 +54,7 @@ CRON_SECRET=""
 Start the database and app:
 
 ```bash
-docker compose up -d
+pnpm run db:start
 pnpm run setup
 pnpm run dev
 ```
@@ -129,12 +129,16 @@ Never enable these automatically in production.
 - `pnpm run typecheck` runs TypeScript.
 - `pnpm run test` runs unit tests.
 - `pnpm run test:integration` runs database-backed integration tests against `TEST_DATABASE_URL`.
-- `pnpm run test:e2e` runs Playwright.
+- `pnpm run test:e2e` verifies `TEST_DATABASE_URL`, resets and seeds that dedicated database, then runs Playwright.
+- `pnpm run test:e2e:raw` runs Playwright without resetting or safety-checking the database.
 - `pnpm run format` writes Prettier formatting.
 - `pnpm run format:check` checks formatting.
+- `pnpm run db:start` starts Docker development and test PostgreSQL services.
+- `pnpm run db:stop` stops Docker development and test PostgreSQL services.
 - `pnpm run db:migrate` creates/applies local development migrations.
 - `pnpm run db:migrate:deploy` applies committed migrations.
 - `pnpm run db:seed` seeds local development data.
+- `pnpm run db:prepare:e2e` resets, migrates, and seeds the dedicated E2E database.
 - `pnpm run db:reset` destructively resets a non-production development database.
 
 ## How to Use Ascend OS Every Day
@@ -211,14 +215,18 @@ Then open `http://localhost:3001`.
 
 ## Browser Tests
 
-Use a dedicated non-production test database. Set `DATABASE_URL` to that database, then run:
+Use a dedicated non-production test database in `TEST_DATABASE_URL`. The E2E runner refuses to run unless the test database URL is distinct from `DATABASE_URL`, is PostgreSQL, is not marked production, and has a database name containing `test`, `e2e`, or `ci`.
+
+With Docker:
 
 ```bash
-pnpm run setup
+pnpm run db:start
 pnpm run test:e2e
 ```
 
-Do not run Playwright against production or a shared customer database.
+With a native or hosted PostgreSQL test database, set `TEST_DATABASE_URL` to that database before running `pnpm run test:e2e`. Playwright artifacts are written outside the repository by default at `/private/tmp/ascend-os-playwright-results`; override with `PLAYWRIGHT_OUTPUT_DIR` when needed.
+
+Do not run Playwright against production or a shared customer database. `pnpm run test:e2e` intentionally resets the database in `TEST_DATABASE_URL`.
 
 ## PWA Notes
 

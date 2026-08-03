@@ -117,6 +117,7 @@ export const founderPermissions = [...PERMISSIONS];
 export const salespersonPermissions: PermissionKey[] = [
   "dashboard.view",
   "leads.view",
+  "leads.manage",
   "prospects.view_own",
   "prospects.manage_own",
   "outreach.create",

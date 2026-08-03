@@ -92,6 +92,7 @@ test("salesperson cannot access the revenue dashboard", async ({ page }) => {
   await page.getByLabel("Email").fill("sales@ascend.local");
   await page.getByLabel("Password").fill("AscendDev123!");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app$/, { timeout: 20000 });
   await page.goto("/app/revenue");
   await expect(page).toHaveURL(/\/app/);
   await expect(page.getByRole("heading", { name: "Financial operating center" })).toHaveCount(0);

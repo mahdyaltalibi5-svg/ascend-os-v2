@@ -25,15 +25,14 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await page.getByRole("link", { name: /Sales/ }).click();
   await expect(page.getByRole("heading", { name: "Utah HVAC and plumbing CRM" })).toBeVisible();
 
-  await page.getByLabel("Business name").fill(businessName);
+  await page.getByRole("textbox", { name: "Business name", exact: true }).fill(businessName);
   await page.getByLabel("Owner name").fill("Jamie Smith");
   await page.getByLabel("Phone", { exact: true }).fill("801-555-0100");
   await page.getByLabel("Website", { exact: true }).fill("https://example.com");
   await page.getByLabel("Phone verification source").fill("https://example.com/contact");
   await page.getByLabel("Phone verification method").selectOption("official_company_website");
   await page.getByLabel("Phone type").selectOption("official_company_line");
-  await page.getByRole("textbox", { name: "Industry" }).fill("HVAC");
-  await page.getByLabel("Call ready").check();
+  await page.getByRole("checkbox", { name: "Call ready" }).check();
   await page.getByRole("button", { name: "Add lead" }).click();
   await expect(page.getByText(businessName)).toBeVisible();
 

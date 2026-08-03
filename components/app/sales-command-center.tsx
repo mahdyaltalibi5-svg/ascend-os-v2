@@ -461,14 +461,14 @@ function LeadReviewPanel({
         </Select>
         <Select name="status" label="Status">
           <option value="">All statuses</option>
-          <option value="call_ready">Call ready</option>
+          <option value="call_ready">Ready to call</option>
           <option value="needs_evidence">Needs evidence</option>
           <option value="do_not_call">Do not call</option>
         </Select>
         <Select name="sort" label="Sort" defaultValue="updated">
           <option value="updated">Recently updated</option>
           <option value="score">Lead score</option>
-          <option value="name">Business name</option>
+          <option value="name">Name A-Z</option>
           <option value="follow_up">Next follow-up</option>
           <option value="last_contacted">Last contacted</option>
         </Select>

@@ -12,6 +12,7 @@ import {
   dailyReviewSchema,
   editPrioritySchema
 } from "@/lib/validation/personal-os";
+import { leadBusinessSchema } from "@/lib/validation/sales";
 
 describe("mutation validation", () => {
   it("accepts secure account creation input", () => {
@@ -112,5 +113,19 @@ describe("mutation validation", () => {
   it("requires command item ids to be cuid values", () => {
     expect(commandItemIdSchema.safeParse({ id: "clz6x4v2m000008l4e6zafn0a" }).success).toBe(true);
     expect(commandItemIdSchema.safeParse({ id: "not-a-cuid" }).success).toBe(false);
+  });
+
+  it("validates CRM lead phone, trade, and Utah scope", () => {
+    const validLead = {
+      businessName: "Wasatch Comfort Pros",
+      trade: "HVAC",
+      primaryPhone: "801-555-0100",
+      state: "UT"
+    };
+
+    expect(leadBusinessSchema.safeParse(validLead).success).toBe(true);
+    expect(leadBusinessSchema.safeParse({ ...validLead, primaryPhone: "abc" }).success).toBe(false);
+    expect(leadBusinessSchema.safeParse({ ...validLead, trade: "Roofing" }).success).toBe(false);
+    expect(leadBusinessSchema.safeParse({ ...validLead, state: "AZ" }).success).toBe(false);
   });
 });

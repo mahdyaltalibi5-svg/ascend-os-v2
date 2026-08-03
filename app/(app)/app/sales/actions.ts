@@ -169,6 +169,7 @@ export async function launchLeadCampaignAction(formData: FormData) {
 export async function createManualLeadAction(formData: FormData) {
   const context = await salesContext("leads.manage");
   const parsed = leadBusinessSchema.parse(Object.fromEntries(formData));
+  await assertValidAssignee(context.organizationId, parsed.assignedUserId);
   const lead = await upsertLeadBusiness(context, {
     businessName: parsed.businessName,
     trade: parsed.trade,
@@ -229,6 +230,7 @@ export async function updateLeadBusinessAction(formData: FormData) {
     where: { id, organizationId: context.organizationId }
   });
   const parsed = leadBusinessSchema.parse(Object.fromEntries(formData));
+  await assertValidAssignee(context.organizationId, parsed.assignedUserId);
   const normalizedPhone = normalizePhone(parsed.primaryPhone);
   if (normalizedPhone && normalizedPhone !== existing.normalizedPhone) {
     await assertPhoneAvailable(context.organizationId, normalizedPhone);
@@ -364,6 +366,10 @@ export async function importLeadsCsvAction(formData: FormData) {
         [
           "DUPLICATE_NORMALIZED_PHONE",
           "SUPPRESSED_NUMBER",
+          "INVALID_PHONE",
+          "INVALID_STATE",
+          "INVALID_TRADE",
+          "INVALID_ASSIGNEE",
           "CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE",
           "OWNER_DIRECT_REQUIRES_EVIDENCE"
         ].includes(error.message)
@@ -462,6 +468,7 @@ export async function convertLeadToProspectAction(formData: FormData) {
   if (existing) throw new Error("DUPLICATE_ACTIVE_PROSPECT");
   if (!lead.callReady) throw new Error("CALL_READY_REQUIRES_OFFICIAL_PHONE_EVIDENCE");
   if (lead.doNotCall) throw new Error("LEAD_DO_NOT_CALL");
+  await assertValidAssignee(context.organizationId, parsed.assignedUserId);
   await assertNumberNotSuppressed(context.organizationId, lead.normalizedPhone, "phone");
   const firstFollowUp = parsed.firstFollowUpDate
     ? new Date(`${parsed.firstFollowUpDate}T16:00:00.000Z`)
@@ -510,6 +517,7 @@ export async function updateProspectAction(formData: FormData) {
   const context = await anySalesContext(["prospects.manage_all", "prospects.manage_own"]);
   const parsed = prospectUpdateSchema.parse(Object.fromEntries(formData));
   const prospect = await assertProspectAccess(context, parsed.prospectId, "manage");
+  await assertValidAssignee(context.organizationId, parsed.assignedUserId);
   const updated = await prisma.prospect.update({
     where: { id: prospect.id },
     data: {
@@ -1107,10 +1115,12 @@ async function upsertLeadBusiness(
   }
 ) {
   const normalized = normalizeProviderResult(input);
-  if (normalized.normalizedPhone) {
-    await assertPhoneAvailable(context.organizationId, normalized.normalizedPhone);
-    await assertNumberNotSuppressed(context.organizationId, normalized.normalizedPhone, "phone");
-  }
+  if (!normalized.normalizedPhone) throw new Error("INVALID_PHONE");
+  if (input.state && input.state.toUpperCase() !== "UT") throw new Error("INVALID_STATE");
+  if (input.trade && !["HVAC", "Plumbing"].includes(input.trade)) throw new Error("INVALID_TRADE");
+  await assertValidAssignee(context.organizationId, input.assignedUserId);
+  await assertPhoneAvailable(context.organizationId, normalized.normalizedPhone);
+  await assertNumberNotSuppressed(context.organizationId, normalized.normalizedPhone, "phone");
   const phoneVerificationMethod = input.phoneVerificationMethod ?? "unverified";
   const phoneVerificationSource = input.phoneVerificationSource?.trim() || null;
   const callReady = canMarkCallReady({
@@ -1304,7 +1314,9 @@ function tradeFromIndustry(industry?: string | null) {
 
 function tradeCell(row: Record<string, string>) {
   const raw = cell(row, "Trade", "trade", "Industry", "industry");
-  return tradeFromIndustry(raw) ?? (raw.toLowerCase().includes("plumb") ? "Plumbing" : "HVAC");
+  const trade = tradeFromIndustry(raw);
+  if (!trade) throw new Error("INVALID_TRADE");
+  return trade;
 }
 
 function verificationMethodCell(row: Record<string, string>) {
@@ -1390,6 +1402,15 @@ async function suppressLeadNumber(
       createdById: context.userId
     }
   });
+}
+
+async function assertValidAssignee(organizationId: string, assignedUserId?: string | null) {
+  if (!assignedUserId) return;
+  const membership = await prisma.organizationMembership.findFirst({
+    where: { organizationId, userId: assignedUserId, status: "ACTIVE" },
+    select: { id: true }
+  });
+  if (!membership) throw new Error("INVALID_ASSIGNEE");
 }
 
 async function assertProspectAccess(

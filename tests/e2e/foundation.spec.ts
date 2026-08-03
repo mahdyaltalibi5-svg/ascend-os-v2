@@ -26,7 +26,7 @@ test("founder completes foundation onboarding and signs out", async ({ page }) =
   await expect(page.getByRole("link", { name: /Settings/ })).toBeVisible();
 
   await page
-    .getByRole("button", { name: /Sign out/ })
+    .getByRole("link", { name: /Sign out/ })
     .first()
     .click();
   await page.waitForURL(/\/signin/);
