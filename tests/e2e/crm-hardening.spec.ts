@@ -139,7 +139,7 @@ async function createLead(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")}.example.test`;
   await openLeadTools(page);
-  const form = page.locator('form:has(input[name="businessName"])').first();
+  const form = manualLeadForm(page);
   await form.locator('input[name="businessName"]').fill(input.businessName);
   await form.locator('select[name="trade"]').selectOption(input.trade);
   await form.locator('input[name="ownerName"]').fill(input.ownerName);
@@ -164,8 +164,9 @@ async function createLead(
 
 async function importCsv(page: Page, rows: string[]) {
   await openLeadTools(page);
-  await page.locator('textarea[name="csv"]').fill(rows.join("\n"));
-  await page.getByRole("button", { name: "Import CSV" }).click();
+  const form = csvImportForm(page);
+  await form.locator('textarea[name="csv"]').fill(rows.join("\n"));
+  await form.getByRole("button", { name: "Import CSV" }).click();
 }
 
 async function openLeadTools(page: Page) {
@@ -174,4 +175,18 @@ async function openLeadTools(page: Page) {
       element.open = true;
     }
   });
+}
+
+function manualLeadForm(page: Page) {
+  return page
+    .locator("form")
+    .filter({ has: page.getByRole("button", { name: "Add lead" }) })
+    .first();
+}
+
+function csvImportForm(page: Page) {
+  return page
+    .locator("form")
+    .filter({ has: page.getByRole("button", { name: "Import CSV" }) })
+    .first();
 }
