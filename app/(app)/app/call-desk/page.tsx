@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { CallDeskClient } from "@/components/app/call-desk-client";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/server/auth";
 import { getCallDeskContext, getCallDeskData } from "@/lib/server/call-desk";
 
@@ -15,24 +14,16 @@ export default async function CallDeskPage() {
   const data = await getCallDeskData(context);
 
   return (
-    <section className="grid gap-5">
-      <Card className="scan-line">
-        <CardHeader>
-          <CardTitle>Owner-first call desk</CardTitle>
-          <CardDescription>
-            One assigned, verified lead at a time. Calls open through a normal phone link, then
-            outcomes are recorded here when the caller returns.
-          </CardDescription>
-        </CardHeader>
-        <div className="grid gap-3 text-sm text-muted sm:grid-cols-3">
-          <p>{data.queue.length} eligible leads previewed</p>
-          <p>
-            {data.callbacks.filter((callback) => callback.effectiveStatus === "overdue").length}{" "}
-            overdue callbacks
-          </p>
-          <p>{data.appointments.length} appointments visible</p>
-        </div>
-      </Card>
+    <section className="grid gap-4">
+      <header className="rounded-md border border-border bg-surface/72 p-4">
+        <p className="text-sm font-semibold text-primary">Speed Dialer</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-normal text-foreground">
+          Next verified call
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          One lead at a time, with evidence visible and outcomes always one tap away.
+        </p>
+      </header>
       <CallDeskClient initialData={data} />
     </section>
   );

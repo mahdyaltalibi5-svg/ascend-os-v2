@@ -12,6 +12,126 @@ export type SalesLeadFilters = {
   sort?: string;
 };
 
+export type SalesViewScope =
+  "overview" | "queue" | "follow-ups" | "appointments" | "pipeline" | "performance" | "export";
+
+const salesDataLimits: Record<
+  SalesViewScope,
+  {
+    campaigns: number;
+    leadBusinesses: number;
+    analyses: number;
+    prospects: number;
+    attempts: number;
+    followUps: number;
+    appointments: number;
+    opportunities: number;
+    salesGoals: number;
+    jobs: number;
+    suppressions: number;
+    queue: number;
+  }
+> = {
+  overview: {
+    campaigns: 6,
+    leadBusinesses: 30,
+    analyses: 30,
+    prospects: 45,
+    attempts: 120,
+    followUps: 24,
+    appointments: 12,
+    opportunities: 28,
+    salesGoals: 8,
+    jobs: 8,
+    suppressions: 20,
+    queue: 18
+  },
+  queue: {
+    campaigns: 2,
+    leadBusinesses: 12,
+    analyses: 20,
+    prospects: 80,
+    attempts: 90,
+    followUps: 24,
+    appointments: 8,
+    opportunities: 16,
+    salesGoals: 4,
+    jobs: 4,
+    suppressions: 30,
+    queue: 40
+  },
+  "follow-ups": {
+    campaigns: 2,
+    leadBusinesses: 12,
+    analyses: 20,
+    prospects: 80,
+    attempts: 60,
+    followUps: 90,
+    appointments: 10,
+    opportunities: 16,
+    salesGoals: 4,
+    jobs: 4,
+    suppressions: 20,
+    queue: 18
+  },
+  appointments: {
+    campaigns: 2,
+    leadBusinesses: 12,
+    analyses: 20,
+    prospects: 70,
+    attempts: 60,
+    followUps: 20,
+    appointments: 80,
+    opportunities: 30,
+    salesGoals: 4,
+    jobs: 4,
+    suppressions: 20,
+    queue: 18
+  },
+  pipeline: {
+    campaigns: 2,
+    leadBusinesses: 12,
+    analyses: 20,
+    prospects: 90,
+    attempts: 60,
+    followUps: 20,
+    appointments: 20,
+    opportunities: 120,
+    salesGoals: 4,
+    jobs: 4,
+    suppressions: 20,
+    queue: 18
+  },
+  performance: {
+    campaigns: 2,
+    leadBusinesses: 12,
+    analyses: 20,
+    prospects: 50,
+    attempts: 260,
+    followUps: 20,
+    appointments: 90,
+    opportunities: 120,
+    salesGoals: 20,
+    jobs: 4,
+    suppressions: 20,
+    queue: 18
+  },
+  export: {
+    campaigns: 30,
+    leadBusinesses: 200,
+    analyses: 200,
+    prospects: 200,
+    attempts: 400,
+    followUps: 200,
+    appointments: 160,
+    opportunities: 200,
+    salesGoals: 20,
+    jobs: 20,
+    suppressions: 80,
+    queue: 40
+  }
+};
+
 export async function getDefaultPipeline(organizationId: string) {
   let pipeline = await prisma.pipeline.findFirst({
     where: { organizationId, isDefault: true, archivedAt: null },
@@ -33,6 +153,7 @@ export async function getSalesCommandData(input: {
   permissions: string[];
   timezone: string;
   filters?: SalesLeadFilters;
+  view?: SalesViewScope;
 }) {
   const now = new Date();
   const dayStart = new Date(now);
@@ -47,6 +168,7 @@ export async function getSalesCommandData(input: {
   const pipeline = await getDefaultPipeline(input.organizationId);
   const leadWhere = leadFilterWhere(input.organizationId, input.filters);
   const leadOrderBy = leadSort(input.filters?.sort);
+  const limits = salesDataLimits[input.view ?? "overview"];
 
   const [
     campaigns,
@@ -67,18 +189,18 @@ export async function getSalesCommandData(input: {
       where: { organizationId: input.organizationId, archivedAt: null },
       include: { memberships: true, jobs: { orderBy: { createdAt: "desc" }, take: 1 } },
       orderBy: { updatedAt: "desc" },
-      take: 30
+      take: limits.campaigns
     }),
     prisma.leadBusiness.findMany({
       where: leadWhere,
       include: { analyses: { orderBy: { createdAt: "desc" }, take: 1 }, prospects: true },
       orderBy: leadOrderBy,
-      take: 120
+      take: limits.leadBusinesses
     }),
     prisma.leadAnalysis.findMany({
       where: { organizationId: input.organizationId },
       orderBy: { updatedAt: "desc" },
-      take: 120
+      take: limits.analyses
     }),
     prisma.prospect.findMany({
       where: { organizationId: input.organizationId, archivedAt: null, ...ownFilter },
@@ -91,7 +213,7 @@ export async function getSalesCommandData(input: {
         opportunities: { include: { pipelineStage: true }, orderBy: { updatedAt: "desc" }, take: 4 }
       },
       orderBy: { updatedAt: "desc" },
-      take: 150
+      take: limits.prospects
     }),
     prisma.outreachAttempt.findMany({
       where: {
@@ -100,7 +222,7 @@ export async function getSalesCommandData(input: {
         startedAt: { gte: dayStart, lte: dayEnd }
       },
       orderBy: { startedAt: "desc" },
-      take: 200
+      take: limits.attempts
     }),
     prisma.followUp.findMany({
       where: {
@@ -110,7 +232,7 @@ export async function getSalesCommandData(input: {
       },
       include: { prospect: { include: { leadBusiness: true } } },
       orderBy: { dueAt: "asc" },
-      take: 120
+      take: limits.followUps
     }),
     prisma.appointment.findMany({
       where: {
@@ -121,7 +243,7 @@ export async function getSalesCommandData(input: {
       },
       include: { prospect: { include: { leadBusiness: true } }, opportunity: true },
       orderBy: { startAt: "asc" },
-      take: 80
+      take: limits.appointments
     }),
     prisma.opportunity.findMany({
       where: {
@@ -137,7 +259,7 @@ export async function getSalesCommandData(input: {
         revenueContracts: true
       },
       orderBy: { updatedAt: "desc" },
-      take: 120
+      take: limits.opportunities
     }),
     prisma.salesGoal.findMany({
       where: {
@@ -146,17 +268,17 @@ export async function getSalesCommandData(input: {
         OR: [{ userId: null }, { userId: input.userId }]
       },
       orderBy: { createdAt: "desc" },
-      take: 20
+      take: limits.salesGoals
     }),
     prisma.backgroundJob.findMany({
       where: { organizationId: input.organizationId },
       orderBy: { createdAt: "desc" },
-      take: 20
+      take: limits.jobs
     }),
     prisma.contactSuppression.findMany({
       where: { organizationId: input.organizationId },
       orderBy: { createdAt: "desc" },
-      take: 40
+      take: limits.suppressions
     }),
     prisma.organizationMembership.findMany({
       where: { organizationId: input.organizationId, status: "ACTIVE" },
@@ -180,7 +302,7 @@ export async function getSalesCommandData(input: {
   const queue = rankQueue(
     prospects.filter((prospect) => !suppressedPhones.has(prospect.leadBusiness.normalizedPhone)),
     now
-  ).slice(0, 40);
+  ).slice(0, limits.queue);
   const metrics = calculateSalesMetrics({ attempts, appointments, opportunities });
   const callsByUser = members.map((member) => ({
     userId: member.userId,

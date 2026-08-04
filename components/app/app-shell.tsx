@@ -74,7 +74,6 @@ export function AppShell({
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-background text-foreground">
-      <div aria-hidden className="ascend-grid pointer-events-none absolute inset-0 opacity-35" />
       <header className="sticky top-0 z-30 border-b border-border bg-background/92 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/72 lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">

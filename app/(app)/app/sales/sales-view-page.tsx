@@ -27,7 +27,8 @@ export async function SalesViewPage({
     organizationId: context.organization.id,
     userId: session.user.id,
     permissions: context.permissions,
-    timezone: context.organization.timezone
+    timezone: context.organization.timezone,
+    view
   });
 
   return <SalesCommandCenter data={data} permissions={context.permissions} view={view} />;

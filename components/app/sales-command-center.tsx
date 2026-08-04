@@ -1,5 +1,4 @@
 import {
-  Activity,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -7,7 +6,6 @@ import {
   CheckCircle2,
   Download,
   FileUp,
-  Flag,
   Gauge,
   PhoneCall,
   Plus,
@@ -89,16 +87,15 @@ export function SalesCommandCenter({
     permissions.includes("pipeline.view_all");
 
   return (
-    <section className="reveal-up grid gap-6">
-      <header className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div className="max-w-4xl">
+    <section className="reveal-up grid gap-4">
+      <header className="grid gap-4 rounded-md border border-border bg-surface/72 p-4 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)] lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="max-w-3xl">
           <p className="text-sm font-semibold text-primary">Sales Operating System</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
-            Utah HVAC and plumbing CRM
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-foreground sm:text-4xl">
+            Sales workspace
           </h1>
-          <p className="mt-3 text-sm leading-6 text-muted md:text-base">
-            Discover, qualify, call, track, and follow up with owner-verified local businesses.
-            Call-ready leads require official phone evidence before they enter the queue.
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Call verified Utah HVAC and plumbing leads, then move the next follow-up or deal.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -119,7 +116,10 @@ export function SalesCommandCenter({
         </div>
       </header>
 
-      <nav className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6" aria-label="Sales sections">
+      <nav
+        className="flex gap-2 overflow-x-auto rounded-md border border-border bg-background/30 p-2"
+        aria-label="Sales sections"
+      >
         {[
           ["Overview", "/app/sales", "overview"],
           ["Queue", "/app/sales/queue", "queue"],
@@ -130,7 +130,7 @@ export function SalesCommandCenter({
         ].map(([label, href, key]) => (
           <a
             className={cn(
-              "rounded-md border border-border bg-background/35 px-3 py-2 text-center text-sm font-semibold text-muted transition hover:border-border-strong hover:text-foreground",
+              "min-w-fit rounded-md border border-transparent px-3 py-2 text-center text-sm font-semibold text-muted transition hover:border-border-strong hover:text-foreground",
               view === key && "border-primary/55 bg-primary/10 text-foreground"
             )}
             href={href}
@@ -141,37 +141,23 @@ export function SalesCommandCenter({
         ))}
       </nav>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Score icon={PhoneCall} label="Dials today" value={String(data.metrics.dialsToday)} />
-        <Score icon={Activity} label="Answers" value={String(data.metrics.answers)} />
         <Score icon={Target} label="Owners reached" value={String(data.metrics.ownersReached)} />
-        <Score icon={Radar} label="Full pitches" value={String(data.metrics.fullPitches)} />
+        <Score icon={CalendarClock} label="Meetings" value={String(data.metrics.meetingsBooked)} />
         <Score
           icon={CalendarClock}
-          label="Meetings booked"
-          value={String(data.metrics.meetingsBooked)}
-        />
-        <Score icon={Flag} label="Booking rate" value={`${data.metrics.bookingRate}%`} />
-        <Score
-          icon={CalendarClock}
-          label="Follow-ups due"
+          label="Due now"
           value={String(data.attention.overdueFollowUps)}
           tone="hot"
         />
-        <Score icon={PhoneCall} label="Calls by Mahdy" value={String(data.metrics.callsByMahdy)} />
-        <Score icon={PhoneCall} label="Calls by Logan" value={String(data.metrics.callsByLogan)} />
-        <Score icon={Radar} label="Callable queue" value={String(data.queue.length)} />
       </div>
 
-      <Card className="scan-line">
-        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+      <Card className="p-4">
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <p className="text-sm font-semibold text-primary">Recommended sales action</p>
-            <h2 className="mt-2 text-2xl font-semibold">{data.recommendation}</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Queue health, ownership gaps, follow-up risk, and stale opportunities are ranked
-              deterministically from live records.
-            </p>
+            <p className="text-xs font-semibold uppercase text-muted">Next action</p>
+            <h2 className="mt-1 text-xl font-semibold">{data.recommendation}</h2>
           </div>
           <form action={createSalesPriorityAction}>
             <input name="title" type="hidden" value={data.recommendation} />
@@ -181,7 +167,7 @@ export function SalesCommandCenter({
               value="Sales priority created from the Sales Operating System recommendation."
             />
             <input name="impactCents" type="hidden" value={data.metrics.openPipelineCents} />
-            <Button type="submit" variant="secondary">
+            <Button size="sm" type="submit" variant="secondary">
               <Plus aria-hidden className="h-4 w-4" />
               Add priority
             </Button>
@@ -233,14 +219,23 @@ function OverviewView({
   showFounderTools: boolean;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-      <div className="grid gap-6">
-        {canManageCampaigns ? <CampaignPanel data={data} /> : null}
-        {canManageLeads ? <ManualLeadPanel data={data} /> : null}
-        {canManageLeads ? <CsvImportPanel /> : null}
+    <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
+      <div className="grid gap-4">
         <LeadReviewPanel data={data} canResearch={canResearch} canConvert={canManageProspects} />
+        {canManageLeads || canManageCampaigns ? (
+          <details className="rounded-md border border-border bg-background/30 p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-primary">
+              Lead tools
+            </summary>
+            <div className="mt-4 grid gap-4">
+              {canManageCampaigns ? <CampaignPanel data={data} /> : null}
+              {canManageLeads ? <ManualLeadPanel data={data} /> : null}
+              {canManageLeads ? <CsvImportPanel /> : null}
+            </div>
+          </details>
+        ) : null}
       </div>
-      <div className="grid content-start gap-6">
+      <div className="grid content-start gap-4">
         <AttentionPanel data={data} />
         {showFounderTools ? <CampaignList data={data} /> : null}
         <JobPanel data={data} />
@@ -448,10 +443,8 @@ function LeadReviewPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lead table</CardTitle>
-        <CardDescription>
-          Search, filter, sort, edit, and convert verified leads into the call queue.
-        </CardDescription>
+        <CardTitle>Leads</CardTitle>
+        <CardDescription>Search, verify, and send the best records into the queue.</CardDescription>
       </CardHeader>
       <form action="/app/sales" className="mb-4 grid gap-3 md:grid-cols-5">
         <Input name="q" label="Search" placeholder="Business, owner, city, phone" />
@@ -482,10 +475,10 @@ function LeadReviewPanel({
       </form>
       <div className="grid gap-3">
         {data.leadBusinesses.length ? (
-          data.leadBusinesses.slice(0, 50).map((lead) => {
+          data.leadBusinesses.slice(0, 20).map((lead) => {
             const analysis = lead.analyses[0];
             return (
-              <div className="rounded-md border border-border bg-background/35 p-4" key={lead.id}>
+              <div className="rounded-md border border-border bg-background/35 p-3" key={lead.id}>
                 <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -515,12 +508,14 @@ function LeadReviewPanel({
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       {label(lead.phoneType)} • {label(lead.phoneVerificationMethod)}
-                      {lead.phoneVerificationSource ? ` • ${lead.phoneVerificationSource}` : ""}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-muted">
-                      {analysis?.researchSummary ||
-                        lead.notes ||
-                        "Add official phone evidence before calling."}
+                      {shorten(
+                        analysis?.researchSummary ||
+                          lead.notes ||
+                          "Add official phone evidence before calling.",
+                        170
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1448,6 +1443,10 @@ function Empty({ text }: { text: string }) {
 
 function label(value: string) {
   return salesLabelByValue[value] ?? labelize(value);
+}
+
+function shorten(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength).trim()}...` : value;
 }
 
 function assignmentMembers(data: SalesCommandData) {

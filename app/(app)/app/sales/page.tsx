@@ -37,6 +37,7 @@ export default async function SalesPage({
     userId: session.user.id,
     permissions: context.permissions,
     timezone: context.organization.timezone,
+    view: "overview",
     filters: {
       search: filterValue("q"),
       trade: filterValue("trade"),

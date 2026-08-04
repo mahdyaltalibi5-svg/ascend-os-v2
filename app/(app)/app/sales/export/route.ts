@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     organizationId: context.organization.id,
     userId: session.user.id,
     permissions: context.permissions,
-    timezone: context.organization.timezone
+    timezone: context.organization.timezone,
+    view: "export"
   });
 
   const rows = rowsForType(type, data);

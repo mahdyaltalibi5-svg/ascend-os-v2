@@ -57,27 +57,8 @@ html,
 body {
   min-height: 100%;
   background:
-    linear-gradient(
-      115deg,
-      transparent 0 34%,
-      hsl(var(--primary) / 0.08) 34.2% 34.35%,
-      transparent 34.55%
-    ),
-    linear-gradient(
-      140deg,
-      transparent 0 70%,
-      hsl(var(--accent-warm) / 0.055) 70.15% 70.32%,
-      transparent 70.5%
-    ),
-    linear-gradient(90deg, hsl(var(--primary) / 0.045) 0 1px, transparent 1px),
-    linear-gradient(180deg, hsl(var(--foreground) / 0.035) 0 1px, transparent 1px),
-    linear-gradient(180deg, hsl(219 38% 6%), hsl(var(--background)) 42rem);
-  background-size:
-    auto,
-    auto,
-    92px 92px,
-    92px 92px,
-    auto;
+    linear-gradient(180deg, hsl(var(--surface) / 0.82), hsl(var(--background)) 28rem),
+    hsl(var(--background));
   color: hsl(var(--foreground));
 }
 

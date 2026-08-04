@@ -49,7 +49,7 @@ export async function getCallDeskContext(userId: string) {
 
 export async function getCallDeskData(context: CallDeskContext) {
   await recoverStaleLocks(context.organizationId);
-  const [pendingSession, queue, callbacks, appointments] = await Promise.all([
+  const [pendingSession, queue] = await Promise.all([
     prisma.pendingCallSession.findFirst({
       where: {
         organizationId: context.organizationId,
@@ -59,9 +59,7 @@ export async function getCallDeskData(context: CallDeskContext) {
       include: { leadBusiness: { include: leadIncludes() } },
       orderBy: { startedAt: "desc" }
     }),
-    getQueuePreview(context),
-    getCallbacks(context),
-    getAppointments(context)
+    getQueuePreview(context)
   ]);
 
   return {
@@ -72,9 +70,7 @@ export async function getCallDeskData(context: CallDeskContext) {
           leadBusiness: presentLead(pendingSession.leadBusiness)
         }
       : null,
-    queue,
-    callbacks,
-    appointments
+    queue
   };
 }
 

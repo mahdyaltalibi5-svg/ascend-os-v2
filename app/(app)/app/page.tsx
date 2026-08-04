@@ -1,289 +1,196 @@
 import { redirect } from "next/navigation";
 import {
-  Activity,
-  CalendarCheck2,
-  CheckCircle2,
+  BarChart3,
+  CalendarClock,
   ClipboardList,
-  Headphones,
-  LockKeyhole,
-  Plus,
-  ReceiptText,
+  PhoneCall,
+  SearchCheck,
+  ShieldCheck,
   Target,
   UsersRound
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { createRevenuePriorityAction } from "@/app/(app)/app/revenue/actions";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PersonalCommandCenter } from "@/components/app/personal-command-center";
-import { formatMoney } from "@/lib/revenue/formatting";
+import { Card } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/server/auth";
 import { requireOrganizationContext } from "@/lib/server/organization";
-import { getPersonalCommandData } from "@/lib/server/personal-os";
-import { getRevenueSummary } from "@/lib/server/revenue";
+
+type HubAction = {
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  permissions: string[];
+  tone?: "primary" | "warm" | "mint";
+};
+
+const hubActions: HubAction[] = [
+  {
+    title: "Speed Dialer",
+    description: "Start the next verified call.",
+    href: "/app/call-desk",
+    icon: PhoneCall,
+    permissions: ["calls.create", "calls.operate_assigned"],
+    tone: "primary"
+  },
+  {
+    title: "Lead Queue",
+    description: "Call-ready Utah HVAC and plumbing leads.",
+    href: "/app/sales/queue",
+    icon: ClipboardList,
+    permissions: ["prospects.view_own", "prospects.view_all"]
+  },
+  {
+    title: "Scraper Review",
+    description: "Approve discovered companies before calling.",
+    href: "/app/scraper",
+    icon: SearchCheck,
+    permissions: ["scraper.view"],
+    tone: "mint"
+  },
+  {
+    title: "Follow-ups",
+    description: "Handle overdue and scheduled callbacks.",
+    href: "/app/sales/follow-ups",
+    icon: CalendarClock,
+    permissions: ["followups.view_own", "followups.view_all"]
+  },
+  {
+    title: "Pipeline",
+    description: "Move deals through each sales stage.",
+    href: "/app/sales/pipeline",
+    icon: Target,
+    permissions: ["pipeline.view_own", "pipeline.view_all"]
+  },
+  {
+    title: "Founder",
+    description: "Company controls and sales oversight.",
+    href: "/app/founder",
+    icon: ShieldCheck,
+    permissions: ["analytics.company"],
+    tone: "warm"
+  }
+];
 
 export default async function AppDashboardPage() {
   const session = await getCurrentSession();
   if (!session?.user?.id) redirect("/signin");
 
   const context = await requireOrganizationContext(session.user.id);
-  const personalCommandData = await getPersonalCommandData({
-    userId: session.user.id,
-    organizationId: context.organization.id,
-    timezone: context.organization.timezone
-  });
-  const founderLike =
-    context.permissions.includes("revenue.view") || context.permissions.includes("audit.view");
-  const revenueSummary = context.permissions.includes("revenue.view")
-    ? await getRevenueSummary({
-        userId: session.user.id,
-        organizationId: context.organization.id,
-        timezone: context.organization.timezone
-      })
-    : null;
-
-  return founderLike ? (
-    <FounderDashboard
-      data={personalCommandData}
-      organizationName={context.organization.name}
-      revenueSummary={revenueSummary}
-    />
-  ) : (
-    <SalespersonDashboard data={personalCommandData} organizationName={context.organization.name} />
+  const roleLabel = context.roleKeys.includes("founder") ? "CEO" : "Sales";
+  const visibleActions = hubActions.filter((action) =>
+    action.permissions.some((permission) => context.permissions.includes(permission))
   );
-}
+  const firstName = (session.user.name ?? session.user.email ?? "there").split(" ")[0];
 
-function FounderDashboard({
-  data,
-  organizationName,
-  revenueSummary
-}: {
-  data: Awaited<ReturnType<typeof getPersonalCommandData>>;
-  organizationName: string;
-  revenueSummary: Awaited<ReturnType<typeof getRevenueSummary>> | null;
-}) {
   return (
-    <section className="reveal-up grid gap-6">
-      <PersonalCommandCenter data={data} organizationName={organizationName} />
-      {revenueSummary ? <FounderRevenueSummary summary={revenueSummary} /> : null}
-    </section>
-  );
-}
-
-function FounderRevenueSummary({
-  summary
-}: {
-  summary: Awaited<ReturnType<typeof getRevenueSummary>>;
-}) {
-  const recommendation = summary.topRecommendation;
-  return (
-    <Card className="scan-line">
-      <div className="grid gap-5 xl:grid-cols-[1fr_1.1fr] xl:items-center">
+    <section className="reveal-up grid gap-5">
+      <header className="grid gap-4 rounded-md border border-border bg-surface/72 p-4 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)] sm:p-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-          <p className="text-sm font-semibold text-primary">Revenue pulse</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal">
-            {summary.primaryGoal
-              ? `${formatMoney(summary.scorecards.collectedCents)} of ${formatMoney(
-                  summary.primaryGoal.targetAmountCents
-                )} collected`
-              : "Set the monthly revenue goal"}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {summary.progress
-              ? `${formatMoney(summary.progress.remainingAmountCents)} gap. ${summary.progress.remainingDays} days remaining.`
-              : "The full Revenue Command Center will start pacing once a cash-collected goal exists."}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="rounded-sm border border-primary/45 bg-primary/10 px-2 py-1 text-xs font-bold uppercase text-primary">
+              {roleLabel}
+            </span>
+            <span className="text-xs font-semibold uppercase text-muted-soft">
+              {context.organization.name}
+            </span>
+          </div>
+          <h1 className="text-3xl font-semibold tracking-normal text-foreground sm:text-4xl">
+            Ready, {firstName}.
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Pick one thing and move. The full dashboards are still here, but this page is built for
+            getting to calls fast.
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MiniRevenueStat
-            icon={ReceiptText}
-            label="Outstanding"
-            value={formatMoney(summary.scorecards.outstandingCents)}
-          />
-          <MiniRevenueStat
-            icon={Target}
-            label="MRR"
-            value={formatMoney(summary.scorecards.mrrCents)}
-          />
-          <MiniRevenueStat
-            icon={Activity}
-            label="Expected"
-            value={formatMoney(summary.forecast.expectedAmountCents)}
-          />
-        </div>
-      </div>
-      {recommendation ? (
-        <div className="mt-5 rounded-md border border-border bg-background/35 p-3">
-          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-            <div>
-              <p className="text-sm font-semibold">{recommendation.title}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">{recommendation.reason}</p>
-            </div>
-            <form action={createRevenuePriorityAction}>
-              <input name="title" type="hidden" value={recommendation.title} />
-              <input name="reason" type="hidden" value={recommendation.reason} />
-              <input name="impactCents" type="hidden" value={recommendation.estimatedImpactCents} />
-              <input name="entityType" type="hidden" value={recommendation.entityType ?? ""} />
-              <input name="entityId" type="hidden" value={recommendation.entityId ?? ""} />
-              <Button size="sm" type="submit" variant="secondary">
-                <Plus aria-hidden className="h-4 w-4" />
-                Add priority
-              </Button>
-            </form>
-          </div>
-        </div>
-      ) : null}
-    </Card>
-  );
-}
+        <a
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-background transition hover:bg-primary-soft"
+          href="/app/call-desk"
+        >
+          <PhoneCall aria-hidden className="h-4 w-4" />
+          Start dialing
+        </a>
+      </header>
 
-function MiniRevenueStat({
-  icon: Icon,
-  label,
-  value
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-md border border-border bg-background/35 p-3">
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted">
-        <Icon aria-hidden className="h-3.5 w-3.5 text-primary" />
-        {label}
-      </div>
-      <p className="text-lg font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function SalespersonDashboard({
-  data,
-  organizationName
-}: {
-  data: Awaited<ReturnType<typeof getPersonalCommandData>>;
-  organizationName: string;
-}) {
-  const tiles: Array<[string, string, LucideIcon]> = [
-    [
-      "Today's queue",
-      "Lead queues will appear after the sales workspace is enabled.",
-      ClipboardList
-    ],
-    [
-      "Calls completed",
-      "Personal call activity will appear after the dialer is enabled.",
-      Headphones
-    ],
-    ["Conversations", "Conversation tracking arrives with the sales workspace.", UsersRound],
-    [
-      "Appointments booked",
-      "Appointments will appear after calendar workflows exist.",
-      CalendarCheck2
-    ],
-    ["Follow-ups", "Follow-up tasks arrive with the CRM workflow.", CheckCircle2],
-    [
-      "Upcoming appointments",
-      "Calendar-backed appointments are deferred to a later milestone.",
-      CalendarCheck2
-    ],
-    [
-      "Personal performance",
-      "Personal sales performance will appear after real activity data exists.",
-      Activity
-    ]
-  ];
-
-  return (
-    <section className="reveal-up grid gap-6">
-      <PageHeader
-        title="Sales Command Center"
-        description={`${organizationName} sales access is active. Use the personal command layer while founder-only financial and administrative surfaces stay hidden.`}
-        eyebrow="Ascend OS"
-        mode="Personal OS"
-      />
-      <PersonalCommandCenter data={data} organizationName={organizationName} />
-      <Card className="scan-line">
-        <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <p className="text-sm font-semibold text-primary">Permission-shaped workspace</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">
-              Sales tools are ready to receive real queues.
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-              The salesperson shell exposes sales-facing modules while keeping revenue, organization
-              administration, and audit controls out of view.
-            </p>
-          </div>
-          <div className="flex min-w-48 items-center gap-3 rounded-md border border-border bg-background/35 p-3">
-            <LockKeyhole aria-hidden className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Restricted</p>
-              <p className="text-xs text-muted">Founder-only data hidden</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {tiles.map(([title, description, Icon]) => (
-          <MetricShell key={title} title={title} description={description} icon={Icon} />
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {visibleActions.map((action) => (
+          <ActionCard key={action.href} action={action} />
         ))}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <MiniLink
+          description="Manual import, campaign tools, lead table."
+          href="/app/sales"
+          icon={UsersRound}
+          title="Sales workspace"
+        />
+        <MiniLink
+          description="Personal metrics and next actions."
+          href="/app/sales-dashboard"
+          icon={BarChart3}
+          title="My dashboard"
+        />
+        <MiniLink
+          description="Appointments, callbacks, and follow-ups."
+          href="/app/calendar"
+          icon={CalendarClock}
+          title="Calendar"
+        />
       </div>
     </section>
   );
 }
 
-function MetricShell({
+function ActionCard({ action }: { action: HubAction }) {
+  const Icon = action.icon;
+  const toneClass =
+    action.tone === "warm"
+      ? "border-accent-warm/45 bg-accent-warm/10 text-accent-warm"
+      : action.tone === "mint"
+        ? "border-accent-mint/45 bg-accent-mint/10 text-accent-mint"
+        : "border-primary/45 bg-primary/10 text-primary";
+
+  return (
+    <a href={action.href} className="group block">
+      <Card className="min-h-36 p-4 transition duration-150 group-hover:border-border-strong group-hover:bg-surface-raised">
+        <div className="flex h-full items-start justify-between gap-4">
+          <div>
+            <p className="text-lg font-semibold text-foreground">{action.title}</p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted">{action.description}</p>
+          </div>
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${toneClass}`}
+          >
+            <Icon aria-hidden className="h-5 w-5" />
+          </span>
+        </div>
+      </Card>
+    </a>
+  );
+}
+
+function MiniLink({
   title,
   description,
+  href,
   icon: Icon
 }: {
   title: string;
   description: string;
+  href: string;
   icon: LucideIcon;
 }) {
   return (
-    <Card className="group min-h-44">
-      <CardHeader>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border-strong bg-surface-elevated text-primary shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)] transition duration-200 group-hover:border-primary/45">
-            <Icon aria-hidden className="h-5 w-5" />
-          </div>
-          <span className="rounded-sm border border-border bg-background/45 px-2 py-1 text-xs font-medium text-muted-soft">
-            Not connected
-          </span>
-        </div>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-    </Card>
-  );
-}
-
-function PageHeader({
-  title,
-  description,
-  eyebrow,
-  mode
-}: {
-  title: string;
-  description: string;
-  eyebrow: string;
-  mode: string;
-}) {
-  return (
-    <header className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold text-primary">{eyebrow}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
-          {title}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted md:text-base">{description}</p>
+    <a
+      className="rounded-md border border-border bg-background/30 p-4 transition hover:border-border-strong hover:bg-surface-raised"
+      href={href}
+    >
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-primary">
+        <Icon aria-hidden className="h-4 w-4" />
       </div>
-      <div className="w-fit rounded-md border border-border bg-surface/75 px-3 py-2 text-xs font-semibold uppercase text-muted shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]">
-        {mode}
-      </div>
-    </header>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-muted">{description}</p>
+    </a>
   );
 }
