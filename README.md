@@ -230,7 +230,7 @@ pnpm run db:start
 pnpm run test:e2e
 ```
 
-With a native or hosted PostgreSQL test database, set `TEST_DATABASE_URL` to that database before running `pnpm run test:e2e`. Playwright artifacts are written outside the repository by default at `/private/tmp/ascend-os-playwright-results`; override with `PLAYWRIGHT_OUTPUT_DIR` when needed.
+With a native or hosted PostgreSQL test database, set `TEST_DATABASE_URL` to that database before running `pnpm run test:e2e`. Playwright artifacts are written to the ignored `test-results` folder by default; override with `PLAYWRIGHT_OUTPUT_DIR` when needed.
 
 Do not run Playwright against production or a shared customer database. `pnpm run test:e2e` intentionally resets the database in `TEST_DATABASE_URL`.
 

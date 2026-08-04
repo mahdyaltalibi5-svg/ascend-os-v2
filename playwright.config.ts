@@ -4,7 +4,7 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? "/private/tmp/ascend-os-playwright-results",
+  outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? "test-results",
   timeout: 30000,
   fullyParallel: false,
   workers: 1,
