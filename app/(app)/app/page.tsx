@@ -21,6 +21,7 @@ type HubAction = {
   href: string;
   icon: LucideIcon;
   permissions: string[];
+  ariaLabel?: string;
   tone?: "primary" | "warm" | "mint";
 };
 
@@ -46,6 +47,7 @@ const hubActions: HubAction[] = [
     href: "/app/scraper",
     icon: SearchCheck,
     permissions: ["scraper.view"],
+    ariaLabel: "Review discovered companies",
     tone: "mint"
   },
   {
@@ -53,14 +55,16 @@ const hubActions: HubAction[] = [
     description: "Handle overdue and scheduled callbacks.",
     href: "/app/sales/follow-ups",
     icon: CalendarClock,
-    permissions: ["followups.view_own", "followups.view_all"]
+    permissions: ["followups.view_own", "followups.view_all"],
+    ariaLabel: "Open due callbacks"
   },
   {
     title: "Pipeline",
     description: "Move deals through each sales stage.",
     href: "/app/sales/pipeline",
     icon: Target,
-    permissions: ["pipeline.view_own", "pipeline.view_all"]
+    permissions: ["pipeline.view_own", "pipeline.view_all"],
+    ariaLabel: "Open deal board"
   },
   {
     title: "Founder",
@@ -68,6 +72,7 @@ const hubActions: HubAction[] = [
     href: "/app/founder",
     icon: ShieldCheck,
     permissions: ["analytics.company"],
+    ariaLabel: "Open company controls",
     tone: "warm"
   }
 ];
@@ -112,6 +117,10 @@ export default async function AppDashboardPage() {
         </a>
       </header>
 
+      <h2 className="text-lg font-semibold tracking-normal text-foreground">
+        What needs to happen today?
+      </h2>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {visibleActions.map((action) => (
           <ActionCard key={action.href} action={action} />
@@ -123,19 +132,22 @@ export default async function AppDashboardPage() {
           description="Manual import, campaign tools, lead table."
           href="/app/sales"
           icon={UsersRound}
-          title="Sales workspace"
+          title="Sales Command Center"
+          ariaLabel="Open workspace tools"
         />
         <MiniLink
           description="Personal metrics and next actions."
           href="/app/sales-dashboard"
           icon={BarChart3}
           title="My dashboard"
+          ariaLabel="Open personal metrics"
         />
         <MiniLink
           description="Appointments, callbacks, and follow-ups."
           href="/app/calendar"
           icon={CalendarClock}
           title="Calendar"
+          ariaLabel="Open schedule"
         />
       </div>
     </section>
@@ -152,7 +164,7 @@ function ActionCard({ action }: { action: HubAction }) {
         : "border-primary/45 bg-primary/10 text-primary";
 
   return (
-    <a href={action.href} className="group block">
+    <a href={action.href} className="group block" aria-label={action.ariaLabel}>
       <Card className="min-h-36 p-4 transition duration-150 group-hover:border-border-strong group-hover:bg-surface-raised">
         <div className="flex h-full items-start justify-between gap-4">
           <div>
@@ -174,15 +186,18 @@ function MiniLink({
   title,
   description,
   href,
-  icon: Icon
+  icon: Icon,
+  ariaLabel
 }: {
   title: string;
   description: string;
   href: string;
   icon: LucideIcon;
+  ariaLabel?: string;
 }) {
   return (
     <a
+      aria-label={ariaLabel}
       className="rounded-md border border-border bg-background/30 p-4 transition hover:border-border-strong hover:bg-surface-raised"
       href={href}
     >

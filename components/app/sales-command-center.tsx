@@ -92,7 +92,7 @@ export function SalesCommandCenter({
         <div className="max-w-3xl">
           <p className="text-sm font-semibold text-primary">Sales Operating System</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-foreground sm:text-4xl">
-            Sales workspace
+            Utah HVAC and plumbing CRM
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
             Call verified Utah HVAC and plumbing leads, then move the next follow-up or deal.
