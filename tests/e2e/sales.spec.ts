@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 test("founder creates lead, converts prospect, records outreach, books appointment, and creates opportunity", async ({
   page
@@ -25,6 +25,7 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await page.getByRole("link", { name: /Sales/ }).click();
   await expect(page.getByRole("heading", { name: "Utah HVAC and plumbing CRM" })).toBeVisible();
 
+  await openLeadTools(page);
   await page.getByRole("textbox", { name: "Business name", exact: true }).fill(businessName);
   await page.getByLabel("Owner name").fill("Jamie Smith");
   await page.getByLabel("Phone", { exact: true }).fill("801-555-0100");
@@ -38,7 +39,7 @@ test("founder creates lead, converts prospect, records outreach, books appointme
 
   await page.getByRole("button", { name: "Convert" }).first().click();
   await page.getByRole("link", { name: "Queue", exact: true }).click();
-  await expect(page.getByText(businessName)).toBeVisible();
+  await expect(page.locator("h3", { hasText: businessName })).toBeVisible();
   await page.getByLabel("Outcome").selectOption("interested");
   await page.getByLabel("Duration seconds").fill("180");
   await page.getByRole("button", { name: "Save disposition" }).click();
@@ -58,3 +59,11 @@ test("founder creates lead, converts prospect, records outreach, books appointme
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("heading", { name: "Utah HVAC and plumbing CRM" })).toBeVisible();
 });
+
+async function openLeadTools(page: Page) {
+  await page.locator("details", { hasText: "Lead tools" }).evaluate((element) => {
+    if (element instanceof HTMLDetailsElement) {
+      element.open = true;
+    }
+  });
+}

@@ -67,6 +67,7 @@ async function createLead(
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")}.example.test`;
+  await openLeadTools(page);
   const form = page.locator('form:has(input[name="businessName"])').first();
   await form.locator('input[name="businessName"]').fill(input.businessName);
   await form.locator('select[name="trade"]').selectOption("HVAC");
@@ -86,5 +87,13 @@ async function createLead(
   await form.getByRole("button", { name: "Add lead" }).click();
   await expect(page.locator("h3", { hasText: input.businessName })).toBeVisible({
     timeout: 15000
+  });
+}
+
+async function openLeadTools(page: Page) {
+  await page.locator("details", { hasText: "Lead tools" }).evaluate((element) => {
+    if (element instanceof HTMLDetailsElement) {
+      element.open = true;
+    }
   });
 }
