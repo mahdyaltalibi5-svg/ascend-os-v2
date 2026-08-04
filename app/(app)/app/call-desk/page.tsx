@@ -18,7 +18,7 @@ export default async function CallDeskPage() {
       <header className="rounded-md border border-border bg-surface/72 p-4">
         <p className="text-sm font-semibold text-primary">Speed Dialer</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-normal text-foreground">
-          Next verified call
+          Owner-first call desk
         </h1>
         <p className="mt-2 text-sm leading-6 text-muted">
           One lead at a time, with evidence visible and outcomes always one tap away.

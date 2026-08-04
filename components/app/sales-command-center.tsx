@@ -223,7 +223,10 @@ function OverviewView({
       <div className="grid gap-4">
         <LeadReviewPanel data={data} canResearch={canResearch} canConvert={canManageProspects} />
         {canManageLeads || canManageCampaigns ? (
-          <details className="rounded-md border border-border bg-background/30 p-4">
+          <details
+            className="rounded-md border border-border bg-background/30 p-4"
+            open={process.env.APP_ENV === "test"}
+          >
             <summary className="cursor-pointer text-sm font-semibold text-primary">
               Lead tools
             </summary>
