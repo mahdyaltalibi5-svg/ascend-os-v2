@@ -3,6 +3,7 @@ import {
   Ban,
   CheckCircle2,
   ClipboardCheck,
+  Gauge,
   Play,
   RefreshCcw,
   SearchCheck,
@@ -69,6 +70,28 @@ export function ScraperCommandCenter({ data, permissions }: ScraperCommandCenter
         <Metric icon={XCircle} label="Rejected" value={data.metrics.rejected} />
         <Metric icon={Ban} label="Suppressed" value={data.metrics.suppressed} tone="danger" />
       </div>
+
+      {data.reviewQueue[0] ? (
+        <div className="rounded-md border border-primary/40 bg-primary/10 p-4">
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted">Review first</p>
+              <h2 className="mt-1 text-xl font-semibold">{data.reviewQueue[0].businessName}</h2>
+              <p className="mt-1 text-sm text-muted">
+                {[data.reviewQueue[0].trade, data.reviewQueue[0].city, data.reviewQueue[0].phone]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <ScorePill label="Owner" value={data.reviewQueue[0].ownerReachScore} />
+              <ScorePill label="Need" value={data.reviewQueue[0].marketingNeedScore} />
+              <ScorePill label="Data" value={data.reviewQueue[0].dataConfidenceScore} />
+              <ScorePill label="Priority" value={data.reviewQueue[0].callPriorityScore} />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!data.providerStatus.googlePlacesConfigured ? (
         <div className="rounded-md border border-warning/45 bg-warning/10 p-4 text-sm leading-6 text-warning">
@@ -311,6 +334,33 @@ function ReviewPanel({ data, canApprove }: { data: ScraperDashboardData; canAppr
                   <ScorePill label="Priority" value={discovery.callPriorityScore} />
                 </div>
               </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                <ReviewSignal
+                  label="Approval"
+                  value={
+                    discovery.status === "call_ready"
+                      ? "Ready"
+                      : (salesLabelByValue[discovery.status] ?? discovery.status)
+                  }
+                  tone={discovery.status === "call_ready" ? "good" : "neutral"}
+                />
+                <ReviewSignal
+                  label="Phone"
+                  value={
+                    salesLabelByValue[discovery.phoneVerificationStatus] ??
+                    discovery.phoneVerificationStatus
+                  }
+                  tone={discovery.phoneVerificationStatus.includes("verified") ? "good" : "danger"}
+                />
+                <ReviewSignal
+                  label="Owner"
+                  value={salesLabelByValue[discovery.ownerConfidence] ?? discovery.ownerConfidence}
+                />
+                <ReviewSignal
+                  label="Next"
+                  value={discovery.status === "call_ready" ? "Approve or edit" : "Review evidence"}
+                />
+              </div>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <EvidenceList
@@ -462,6 +512,38 @@ function ScorePill({ label, value }: { label: string; value: number }) {
     <div className="min-w-16 rounded-md border border-border bg-background/35 px-2 py-2">
       <p className="text-[10px] font-semibold uppercase text-muted">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function ReviewSignal({
+  label,
+  value,
+  tone = "neutral"
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "good" | "danger";
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-md border bg-background/35 p-3",
+        tone === "good" && "border-success/35 bg-success/10",
+        tone === "danger" && "border-danger/45 bg-danger/10"
+      )}
+    >
+      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-muted">
+        {tone === "good" ? (
+          <CheckCircle2 aria-hidden className="h-3.5 w-3.5 text-success" />
+        ) : tone === "danger" ? (
+          <AlertTriangle aria-hidden className="h-3.5 w-3.5 text-danger" />
+        ) : (
+          <Gauge aria-hidden className="h-3.5 w-3.5 text-primary" />
+        )}
+        {label}
+      </div>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }

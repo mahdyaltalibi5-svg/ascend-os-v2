@@ -88,6 +88,10 @@ describe("sales core helpers", () => {
           createdAt: now,
           leadBusinessId: "lead1",
           leadBusiness: {
+            leadScore: 88,
+            ownerReachScore: 74,
+            marketingNeedSignals: ["Weak CTA"],
+            websiteWeaknesses: ["No booking flow"],
             reviewCount: 42,
             rating: 4.1,
             city: "Salt Lake City",
@@ -100,6 +104,37 @@ describe("sales core helpers", () => {
         now
       )
     ).toBeGreaterThan(150);
+    expect(
+      queueRank(
+        {
+          id: "missing-phone",
+          priority: "hot",
+          status: "assigned",
+          attemptCount: 0,
+          noAnswerCount: 0,
+          conversationCount: 0,
+          nextActionAt: now,
+          lastContactAt: null,
+          estimatedValueCents: 500000,
+          createdAt: now,
+          leadBusinessId: "lead2",
+          leadBusiness: {
+            leadScore: 95,
+            ownerReachScore: 95,
+            marketingNeedSignals: ["Weak CTA"],
+            websiteWeaknesses: [],
+            reviewCount: 42,
+            rating: 4.1,
+            city: "Salt Lake City",
+            state: "UT",
+            normalizedPhone: null,
+            callReady: true,
+            doNotCall: false
+          }
+        },
+        now
+      )
+    ).toBe(-1);
     expect(followUpForOutcome("callback_requested", now)?.type).toBe("call");
     expect(weightedValue(500000, 40)).toBe(200000);
   });

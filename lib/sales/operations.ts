@@ -10,6 +10,10 @@ type QueueProspect = {
   estimatedValueCents: number | null;
   createdAt: Date;
   leadBusiness: {
+    leadScore: number;
+    ownerReachScore: number;
+    marketingNeedSignals: string[];
+    websiteWeaknesses: string[];
     reviewCount: number | null;
     rating: unknown;
     state: string | null;
@@ -35,7 +39,13 @@ export function queueRank(prospect: QueueProspect, now = new Date()) {
   ) {
     return -1;
   }
-  if (!prospect.leadBusiness.callReady || prospect.leadBusiness.doNotCall) return -1;
+  if (
+    !prospect.leadBusiness.callReady ||
+    !prospect.leadBusiness.normalizedPhone ||
+    prospect.leadBusiness.doNotCall
+  ) {
+    return -1;
+  }
   if (prospect.noAnswerCount >= 3 && !prospect.nextActionAt) return -1;
 
   let score = 0;
@@ -50,6 +60,14 @@ export function queueRank(prospect: QueueProspect, now = new Date()) {
   if (prospect.nextActionAt && prospect.nextActionAt <= now) score += 80;
   if (prospect.attemptCount === 0) score += 22;
   if (prospect.conversationCount > 0) score += 16;
+  score += Math.round(prospect.leadBusiness.ownerReachScore * 0.35);
+  score += Math.round(prospect.leadBusiness.leadScore * 0.22);
+  score += Math.min(
+    24,
+    (prospect.leadBusiness.marketingNeedSignals.length +
+      prospect.leadBusiness.websiteWeaknesses.length) *
+      6
+  );
   if (prospect.estimatedValueCents) score += Math.min(30, prospect.estimatedValueCents / 100000);
   if (prospect.lastContactAt) {
     const daysSince = (now.getTime() - prospect.lastContactAt.getTime()) / 86_400_000;

@@ -1,11 +1,14 @@
 import {
   Activity,
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   CalendarClock,
   CheckCircle2,
   Download,
   FileUp,
   Flag,
+  Gauge,
   PhoneCall,
   Plus,
   Radar,
@@ -51,6 +54,7 @@ import {
   salesGoalMetrics,
   salesLabelByValue
 } from "@/lib/sales/constants";
+import { telUrl } from "@/lib/sales/call-desk";
 import type { SalesCommandData } from "@/lib/server/sales";
 import { cn } from "@/lib/utils";
 
@@ -678,15 +682,51 @@ function LeadReviewPanel({
 function QueueView({ data, permissions }: { data: SalesCommandData; permissions: string[] }) {
   const canManage =
     permissions.includes("prospects.manage_all") || permissions.includes("prospects.manage_own");
+  const next = data.queue[0];
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
       <Card className="scan-line">
         <CardHeader>
-          <CardTitle>Today’s queue</CardTitle>
-          <CardDescription>
-            Prioritized by due follow-ups, lead score, priority, attempts, and deal value.
-          </CardDescription>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle>Today’s queue</CardTitle>
+              <CardDescription>
+                Prioritized by due follow-ups, owner reach, need score, attempts, and deal value.
+              </CardDescription>
+            </div>
+            <a
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-background transition hover:bg-primary-soft"
+              href="/app/call-desk"
+            >
+              <PhoneCall aria-hidden className="h-4 w-4" />
+              Speed dial
+            </a>
+          </div>
         </CardHeader>
+        {next ? (
+          <div className="mb-4 rounded-md border border-primary/40 bg-primary/10 p-4">
+            <p className="text-xs font-semibold uppercase text-muted">Next best call</p>
+            <div className="mt-2 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <p className="text-lg font-semibold">{next.leadBusiness.businessName}</p>
+                <p className="text-sm text-muted">
+                  {[next.leadBusiness.city, next.leadBusiness.state, next.leadBusiness.primaryPhone]
+                    .filter(Boolean)
+                    .join(" • ")}
+                </p>
+              </div>
+              {next.leadBusiness.primaryPhone ? (
+                <a
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-background"
+                  href={telUrl(next.leadBusiness.primaryPhone)}
+                >
+                  <PhoneCall aria-hidden className="h-4 w-4" />
+                  Call now
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         <div className="grid gap-3">
           {data.queue.length ? (
             data.queue.map((prospect) => (
@@ -729,8 +769,14 @@ function ProspectRow({
             <span className="rounded-sm border border-primary/40 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
               {label(prospect.priority)}
             </span>
+            <span className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-xs text-muted">
+              <Gauge aria-hidden className="h-3 w-3" />
+              {prospect.attemptCount} tries
+            </span>
             {analysis ? (
-              <span className="text-xs text-muted">{analysis.overallFitScore}/100 fit</span>
+              <span className="rounded-sm border border-border px-2 py-1 text-xs text-muted">
+                {analysis.overallFitScore}/100 fit
+              </span>
             ) : null}
           </div>
           <p className="mt-1 text-sm text-muted">
@@ -745,12 +791,23 @@ function ProspectRow({
           <p className="mt-2 text-sm leading-6 text-muted">
             {analysis?.researchSummary || prospect.notes || "No research summary yet."}
           </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <MiniSignal label="Status" value={label(prospect.status)} />
+            <MiniSignal
+              label="Next action"
+              value={prospect.nextActionAt ? prospect.nextActionAt.toLocaleString() : "Call now"}
+            />
+            <MiniSignal
+              label="Service"
+              value={prospect.recommendedService || analysis?.recommendedService || "Growth system"}
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {prospect.leadBusiness.primaryPhone ? (
             <a
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-background"
-              href={`tel:${prospect.leadBusiness.primaryPhone}`}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-background"
+              href={telUrl(prospect.leadBusiness.primaryPhone)}
             >
               <PhoneCall aria-hidden className="h-4 w-4" />
               Call
@@ -768,6 +825,15 @@ function ProspectRow({
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MiniSignal({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-surface/70 p-2">
+      <p className="text-[10px] font-semibold uppercase text-muted">{label}</p>
+      <p className="mt-1 break-words text-xs text-foreground">{value}</p>
     </div>
   );
 }
@@ -994,23 +1060,7 @@ function PipelineView({
                       {opportunity.prospect.leadBusiness.businessName}
                     </p>
                     {canManage ? (
-                      <form action={moveOpportunityStageAction} className="mt-2 grid gap-2">
-                        <input name="opportunityId" type="hidden" value={opportunity.id} />
-                        <Select
-                          name="pipelineStageId"
-                          label="Move to"
-                          defaultValue={opportunity.pipelineStageId}
-                        >
-                          {data.pipeline.stages.map((targetStage) => (
-                            <option key={targetStage.id} value={targetStage.id}>
-                              {targetStage.name}
-                            </option>
-                          ))}
-                        </Select>
-                        <Button size="sm" type="submit" variant="secondary">
-                          Move
-                        </Button>
-                      </form>
+                      <StageMover opportunity={opportunity} stages={data.pipeline.stages} />
                     ) : null}
                     {canRevenueHandoff &&
                     opportunity.status === "won" &&
@@ -1026,6 +1076,79 @@ function PipelineView({
       </div>
       {canManage ? <CreateOpportunityPanel data={data} /> : null}
     </div>
+  );
+}
+
+function StageMover({
+  opportunity,
+  stages
+}: {
+  opportunity: SalesCommandData["opportunities"][number];
+  stages: SalesCommandData["pipeline"]["stages"];
+}) {
+  const currentIndex = stages.findIndex((stage) => stage.id === opportunity.pipelineStageId);
+  const previousStage = currentIndex > 0 ? stages[currentIndex - 1] : null;
+  const nextStage =
+    currentIndex >= 0 && currentIndex < stages.length - 1 ? stages[currentIndex + 1] : null;
+
+  return (
+    <div className="mt-3 grid gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <QuickStageButton
+          disabled={!previousStage}
+          icon="back"
+          label={previousStage ? previousStage.name : "First stage"}
+          opportunityId={opportunity.id}
+          stageId={previousStage?.id ?? opportunity.pipelineStageId}
+        />
+        <QuickStageButton
+          disabled={!nextStage}
+          icon="next"
+          label={nextStage ? nextStage.name : "Final stage"}
+          opportunityId={opportunity.id}
+          stageId={nextStage?.id ?? opportunity.pipelineStageId}
+        />
+      </div>
+      <form action={moveOpportunityStageAction} className="grid gap-2">
+        <input name="opportunityId" type="hidden" value={opportunity.id} />
+        <Select name="pipelineStageId" label="Move to" defaultValue={opportunity.pipelineStageId}>
+          {stages.map((targetStage) => (
+            <option key={targetStage.id} value={targetStage.id}>
+              {targetStage.name}
+            </option>
+          ))}
+        </Select>
+        <Button size="sm" type="submit" variant="secondary">
+          Move
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function QuickStageButton({
+  disabled,
+  icon,
+  label,
+  opportunityId,
+  stageId
+}: {
+  disabled: boolean;
+  icon: "back" | "next";
+  label: string;
+  opportunityId: string;
+  stageId: string;
+}) {
+  const Icon = icon === "back" ? ArrowLeft : ArrowRight;
+  return (
+    <form action={moveOpportunityStageAction}>
+      <input name="opportunityId" type="hidden" value={opportunityId} />
+      <input name="pipelineStageId" type="hidden" value={stageId} />
+      <Button className="w-full" disabled={disabled} size="sm" type="submit" variant="secondary">
+        <Icon aria-hidden className="h-4 w-4" />
+        {label}
+      </Button>
+    </form>
   );
 }
 

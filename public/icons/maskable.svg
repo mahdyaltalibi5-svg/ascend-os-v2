@@ -1,5 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#05070d"/>
-  <circle cx="256" cy="256" r="184" fill="#0f172a"/>
-  <path d="M134 350L256 112l122 238h-70l-20-45h-64l26-55h13l-7-16-56 116h-66z" fill="#3b82f6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Ascend Sales OS maskable icon</title>
+  <defs>
+    <linearGradient id="bg" x1="58" x2="454" y1="40" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b1220"/>
+      <stop offset="0.62" stop-color="#05070d"/>
+      <stop offset="1" stop-color="#10251f"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="137" x2="376" y1="119" y2="366" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="0.58" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="200" fill="#0f172a" opacity="0.82"/>
+  <path d="M128 358 256 94l128 264h-76l-20-47h-64l28-61h13l-8-18-58 126h-71z" fill="url(#mark)"/>
+  <path d="M166 400h180" stroke="#f8fafc" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="369" cy="140" r="26" fill="#f59e0b"/>
 </svg>

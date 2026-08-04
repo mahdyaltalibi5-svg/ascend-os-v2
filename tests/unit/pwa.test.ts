@@ -13,6 +13,7 @@ describe("PWA manifest", () => {
       start_url: string;
       display: string;
       icons: unknown[];
+      shortcuts: Array<{ url: string }>;
     };
 
     expect(manifest.name).toBe("Ascend Sales OS");
@@ -20,5 +21,10 @@ describe("PWA manifest", () => {
     expect(manifest.start_url).toBe("/app/call-desk");
     expect(manifest.display).toBe("standalone");
     expect(manifest.icons.length).toBeGreaterThan(0);
+    expect(manifest.shortcuts.map((shortcut) => shortcut.url)).toEqual([
+      "/app/call-desk",
+      "/app/scraper",
+      "/app/sales/queue"
+    ]);
   });
 });

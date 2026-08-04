@@ -101,9 +101,17 @@ export async function getScraperDashboardData(context: ScraperContext) {
     })
   ]);
   const provider = getLeadSourceProvider("google_places");
-  const reviewQueue = discoveries.filter((discovery) =>
-    ["call_ready", "verified", "needs_manual_review", "source_mismatch"].includes(discovery.status)
-  );
+  const reviewQueue = discoveries
+    .filter((discovery) =>
+      ["call_ready", "verified", "needs_manual_review", "source_mismatch"].includes(
+        discovery.status
+      )
+    )
+    .sort(
+      (a, b) =>
+        reviewStatusRank(a.status) - reviewStatusRank(b.status) ||
+        b.callPriorityScore - a.callPriorityScore
+    );
 
   return {
     jobs,
@@ -126,6 +134,16 @@ export async function getScraperDashboardData(context: ScraperContext) {
       suppressed: discoveries.filter((discovery) => discovery.status === "suppressed").length
     }
   };
+}
+
+function reviewStatusRank(status: string) {
+  const ranks: Record<string, number> = {
+    call_ready: 0,
+    verified: 1,
+    needs_manual_review: 2,
+    source_mismatch: 3
+  };
+  return ranks[status] ?? 9;
 }
 
 export async function createScraperJob(context: ScraperContext, input: ScraperJobInput) {

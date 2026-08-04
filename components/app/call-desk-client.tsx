@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { CalendarClock, Loader2, Phone, RotateCcw, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  ExternalLink,
+  Gauge,
+  Loader2,
+  Phone,
+  RotateCcw,
+  ShieldCheck,
+  Target,
+  X,
+  Zap
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +24,10 @@ type DeskLead = {
   businessName: string;
   ownerName: string | null;
   primaryPhone: string | null;
+  normalizedPhone: string | null;
   telUrl: string;
   phoneType: string;
+  phoneVerificationMethod: string;
   trade: string | null;
   city: string | null;
   websiteUrl: string | null;
@@ -301,9 +315,22 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
     () => [label(lead?.phoneType), lead?.trade, lead?.city].filter(Boolean).join(" | "),
     [lead]
   );
+  const qualification = useMemo(() => {
+    if (!lead) return [];
+    return [
+      { label: "Owner reach", value: lead.ownerReachScore, icon: Target },
+      { label: "Lead fit", value: lead.leadScore, icon: Gauge },
+      {
+        label: "Need signals",
+        value: [...lead.marketingNeedSignals, ...lead.websiteWeaknesses].length,
+        icon: Zap
+      },
+      { label: "Attempts", value: attempts.length, icon: Phone }
+    ];
+  }, [attempts.length, lead]);
 
   return (
-    <section className="grid gap-5 pb-28 sm:pb-6">
+    <section className="grid gap-5 pb-44 sm:pb-6">
       {message ? (
         <div className="rounded-md border border-border bg-surface-raised px-4 py-3 text-sm text-muted">
           {message}
@@ -326,15 +353,44 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                   <p className="text-3xl font-semibold text-primary">{lead.ownerReachScore}</p>
                 </div>
               </div>
-              <a
-                className="mt-5 block text-4xl font-semibold tracking-normal text-foreground md:text-6xl"
-                href={lead.telUrl}
-              >
-                {lead.primaryPhone}
-              </a>
+              <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <a
+                  className="inline-flex min-h-16 items-center justify-center gap-3 rounded-md border border-primary/50 bg-primary/15 px-4 text-3xl font-semibold tracking-normal text-foreground transition hover:bg-primary/20 md:text-5xl"
+                  href={lead.telUrl}
+                >
+                  <Phone aria-hidden className="h-7 w-7 shrink-0 text-primary" />
+                  {lead.primaryPhone}
+                </a>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+                  <EvidenceBadge
+                    good={lead.callReady}
+                    label={lead.callReady ? "Verified" : "Blocked"}
+                  />
+                  <EvidenceBadge
+                    good={
+                      lead.phoneType !== "direct_owner" || Boolean(lead.ownerVerificationSource)
+                    }
+                    label={label(lead.phoneVerificationMethod)}
+                  />
+                </div>
+              </div>
               <p className="mt-5 rounded-md border border-border bg-background/40 p-4 text-base leading-7">
                 {lead.suggestedOpener}
               </p>
+              <div className="mt-5 grid gap-2 sm:grid-cols-4">
+                {qualification.map((item) => (
+                  <div
+                    className="rounded-md border border-border bg-background/35 p-3"
+                    key={item.label}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted">
+                      <item.icon aria-hidden className="h-4 w-4 text-primary" />
+                      {item.label}
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold">{item.value}</p>
+                  </div>
+                ))}
+              </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <Info label="Phone evidence" value={lead.phoneVerificationSource ?? "Missing"} />
                 <Info
@@ -362,6 +418,31 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
               </div>
             </div>
             <aside className="grid content-start gap-3">
+              <Panel title="Qualification focus">
+                {lead.callReady ? (
+                  <SignalLine icon={ShieldCheck} text="Official phone evidence is stored." />
+                ) : (
+                  <SignalLine
+                    icon={AlertTriangle}
+                    text="Do not dial until phone evidence is fixed."
+                  />
+                )}
+                <SignalLine
+                  icon={Target}
+                  text={
+                    lead.ownerName
+                      ? `Ask for ${lead.ownerName}.`
+                      : "Ask for the owner by role, not a guessed name."
+                  }
+                />
+                <SignalLine
+                  icon={Zap}
+                  text={
+                    [...lead.marketingNeedSignals, ...lead.websiteWeaknesses][0] ??
+                    "Lead has no stored marketing weakness yet."
+                  }
+                />
+              </Panel>
               <Panel title="Previous attempts">
                 {attempts.length ? (
                   attempts.map((attempt) => (
@@ -388,6 +469,11 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                   {[...lead.marketingNeedSignals, ...lead.websiteWeaknesses].join(", ") ||
                     "No stored signals yet."}
                 </p>
+              </Panel>
+              <Panel title="Evidence links">
+                <EvidenceLink href={lead.websiteUrl} label="Website" />
+                <EvidenceLink href={lead.googleBusinessProfileUrl} label="Google profile" />
+                <EvidenceLink href={lead.phoneVerificationSource} label="Phone source" />
               </Panel>
             </aside>
           </div>
@@ -426,8 +512,9 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
 
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:static lg:border lg:bg-surface lg:p-4">
             <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-[auto_1fr]">
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2 lg:flex">
                 <Button
+                  className="h-14 text-base lg:h-11 lg:text-sm"
                   disabled={busy}
                   onClick={pendingSession ? undefined : startCall}
                   type="button"
@@ -440,20 +527,33 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                   {pendingSession ? `${formatSeconds(elapsed)}` : "Call"}
                 </Button>
                 {pendingSession ? (
-                  <Button disabled={busy} onClick={cancelCall} type="button" variant="secondary">
+                  <Button
+                    className="h-14 text-base lg:h-11 lg:text-sm"
+                    disabled={busy}
+                    onClick={cancelCall}
+                    type="button"
+                    variant="secondary"
+                  >
                     <X aria-hidden className="h-4 w-4" />
                     Cancel
                   </Button>
                 ) : (
-                  <Button disabled={busy} onClick={loadNextLead} type="button" variant="secondary">
+                  <Button
+                    className="h-14 text-base lg:h-11 lg:text-sm"
+                    disabled={busy}
+                    onClick={loadNextLead}
+                    type="button"
+                    variant="secondary"
+                  >
                     <RotateCcw aria-hidden className="h-4 w-4" />
                     Next
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+              <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:max-h-none sm:grid-cols-4 xl:grid-cols-7">
                 {outcomeControls.map(([shortcut, outcome]) => (
                   <Button
+                    className="min-h-12 text-sm"
                     disabled={busy}
                     key={outcome}
                     onClick={() => submitOutcome(outcome)}
@@ -503,6 +603,44 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="text-sm font-semibold">{title}</h2>
       <div className="mt-3 grid gap-2">{children}</div>
     </div>
+  );
+}
+
+function EvidenceBadge({ good, label }: { good: boolean; label: string }) {
+  return (
+    <div
+      className={
+        good
+          ? "rounded-md border border-success/40 bg-success/10 px-3 py-2 text-center text-xs font-semibold text-success"
+          : "rounded-md border border-danger/50 bg-danger/10 px-3 py-2 text-center text-xs font-semibold text-danger"
+      }
+    >
+      {label}
+    </div>
+  );
+}
+
+function SignalLine({ icon: Icon, text }: { icon: typeof ShieldCheck; text: string }) {
+  return (
+    <p className="flex items-start gap-2 text-sm leading-5 text-muted">
+      <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      <span>{text}</span>
+    </p>
+  );
+}
+
+function EvidenceLink({ href, label }: { href: string | null; label: string }) {
+  if (!href) return <p className="text-sm text-muted">{label}: Missing</p>;
+  return (
+    <a
+      className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-soft"
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+    >
+      <ExternalLink aria-hidden className="h-4 w-4" />
+      {label}
+    </a>
   );
 }
 
