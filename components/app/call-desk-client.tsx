@@ -78,6 +78,16 @@ const outcomeControls = [
   ["8", "do_not_call"]
 ] as const;
 
+const primaryOutcomes = [
+  "no_answer",
+  "voicemail",
+  "owner_reached",
+  "callback_requested",
+  "appointment_booked",
+  "wrong_number",
+  "do_not_call"
+];
+
 export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
   const [sessionKey] = useState(() => {
     if (typeof window === "undefined") return "server-session";
@@ -330,7 +340,7 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
   }, [attempts.length, lead]);
 
   return (
-    <section className="grid gap-5 pb-44 sm:pb-6">
+    <section className="grid gap-4 pb-40 sm:pb-6">
       {message ? (
         <div className="rounded-md border border-border bg-surface-raised px-4 py-3 text-sm text-muted">
           {message}
@@ -338,12 +348,12 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
       ) : null}
       {lead ? (
         <>
-          <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
+          <div className="grid gap-4 xl:grid-cols-[1fr_18rem]">
             <div className="rounded-md border border-border bg-surface p-4 shadow-ascend">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-primary">Active lead</p>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-5xl">
+                  <p className="text-sm font-semibold text-primary">Next call</p>
+                  <h1 className="mt-1 text-2xl font-semibold tracking-normal md:text-4xl">
                     {lead.businessName}
                   </h1>
                   <p className="mt-2 text-sm text-muted">{phoneMeta}</p>
@@ -377,7 +387,7 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
               <p className="mt-5 rounded-md border border-border bg-background/40 p-4 text-base leading-7">
                 {lead.suggestedOpener}
               </p>
-              <div className="mt-5 grid gap-2 sm:grid-cols-4">
+              <div className="mt-4 grid gap-2 sm:grid-cols-4">
                 {qualification.map((item) => (
                   <div
                     className="rounded-md border border-border bg-background/35 p-3"
@@ -391,34 +401,32 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                   </div>
                 ))}
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <Info label="Phone evidence" value={lead.phoneVerificationSource ?? "Missing"} />
-                <Info
-                  label="Owner evidence"
-                  value={lead.ownerVerificationSource ?? "Not verified"}
-                />
-                <Info label="Owner or ask-for" value={lead.ownerName ?? "Ask for the owner"} />
-                <Info label="Website" value={lead.websiteUrl ?? "Missing"} />
-                <Info label="Google profile" value={lead.googleBusinessProfileUrl ?? "Missing"} />
-                <Info
-                  label="Call-ready"
-                  value={lead.callReady ? "Verified and call ready" : "Not ready"}
-                />
-                <Info label="Last contacted" value={formatDate(lead.lastContactedAt)} />
-                <Info label="Next follow-up" value={formatDate(lead.nextFollowUpAt)} />
-                <Info
-                  label="Best window"
-                  value={
-                    lead.bestCallingWindowStart && lead.bestCallingWindowEnd
-                      ? `${lead.bestCallingWindowStart}-${lead.bestCallingWindowEnd}`
-                      : "Use policy hours"
-                  }
-                />
-                <Info label="Lead score" value={`${lead.leadScore}/100`} />
-              </div>
+              <details className="mt-4 rounded-md border border-border bg-background/35 p-3">
+                <summary className="cursor-pointer text-sm font-semibold text-primary">
+                  Evidence and details
+                </summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Info label="Phone evidence" value={lead.phoneVerificationSource ?? "Missing"} />
+                  <Info
+                    label="Owner evidence"
+                    value={lead.ownerVerificationSource ?? "Not verified"}
+                  />
+                  <Info label="Owner or ask-for" value={lead.ownerName ?? "Ask for the owner"} />
+                  <Info label="Last contacted" value={formatDate(lead.lastContactedAt)} />
+                  <Info label="Next follow-up" value={formatDate(lead.nextFollowUpAt)} />
+                  <Info
+                    label="Best window"
+                    value={
+                      lead.bestCallingWindowStart && lead.bestCallingWindowEnd
+                        ? `${lead.bestCallingWindowStart}-${lead.bestCallingWindowEnd}`
+                        : "Use policy hours"
+                    }
+                  />
+                </div>
+              </details>
             </div>
             <aside className="grid content-start gap-3">
-              <Panel title="Qualification focus">
+              <Panel title="Why call">
                 {lead.callReady ? (
                   <SignalLine icon={ShieldCheck} text="Official phone evidence is stored." />
                 ) : (
@@ -445,7 +453,7 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
               </Panel>
               <Panel title="Previous attempts">
                 {attempts.length ? (
-                  attempts.map((attempt) => (
+                  attempts.slice(0, 3).map((attempt) => (
                     <p
                       className="text-sm text-muted"
                       key={`${attempt.outcome}-${attempt.startedAt}`}
@@ -457,19 +465,6 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                   <p className="text-sm text-muted">No attempts yet.</p>
                 )}
               </Panel>
-              <Panel title="Owner Reach reasons">
-                {lead.ownerReachScoreReasons.map((reason) => (
-                  <p className="text-sm text-muted" key={reason}>
-                    {reason}
-                  </p>
-                ))}
-              </Panel>
-              <Panel title="Signals">
-                <p className="text-sm text-muted">
-                  {[...lead.marketingNeedSignals, ...lead.websiteWeaknesses].join(", ") ||
-                    "No stored signals yet."}
-                </p>
-              </Panel>
               <Panel title="Evidence links">
                 <EvidenceLink href={lead.websiteUrl} label="Website" />
                 <EvidenceLink href={lead.googleBusinessProfileUrl} label="Google profile" />
@@ -478,9 +473,9 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
             </aside>
           </div>
 
-          <div className="grid gap-3 rounded-md border border-border bg-surface p-4">
+          <div className="grid gap-3 rounded-md border border-border bg-surface p-3">
             <textarea
-              className="ascend-input min-h-24 py-3"
+              className="ascend-input min-h-20 py-3"
               onChange={(event) => {
                 setNotes(event.target.value);
                 window.localStorage.setItem("ascend_pending_note", event.target.value);
@@ -488,26 +483,31 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
               placeholder="Call notes"
               value={notes}
             />
-            <div className="grid gap-3 md:grid-cols-3">
-              <Input
-                label="Callback time"
-                type="datetime-local"
-                value={callbackAt}
-                onChange={(event) => setCallbackAt(event.target.value)}
-              />
-              <Input
-                label="Appointment start"
-                type="datetime-local"
-                value={appointmentStartAt}
-                onChange={(event) => setAppointmentStartAt(event.target.value)}
-              />
-              <Input
-                label="Appointment end"
-                type="datetime-local"
-                value={appointmentEndAt}
-                onChange={(event) => setAppointmentEndAt(event.target.value)}
-              />
-            </div>
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-primary">
+                Callback or appointment
+              </summary>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <Input
+                  label="Callback time"
+                  type="datetime-local"
+                  value={callbackAt}
+                  onChange={(event) => setCallbackAt(event.target.value)}
+                />
+                <Input
+                  label="Appointment start"
+                  type="datetime-local"
+                  value={appointmentStartAt}
+                  onChange={(event) => setAppointmentStartAt(event.target.value)}
+                />
+                <Input
+                  label="Appointment end"
+                  type="datetime-local"
+                  value={appointmentEndAt}
+                  onChange={(event) => setAppointmentEndAt(event.target.value)}
+                />
+              </div>
+            </details>
           </div>
 
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:static lg:border lg:bg-surface lg:p-4">
@@ -551,23 +551,53 @@ export function CallDeskClient({ initialData }: { initialData: InitialDesk }) {
                 )}
               </div>
               <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:max-h-none sm:grid-cols-4 xl:grid-cols-7">
-                {outcomeControls.map(([shortcut, outcome]) => (
-                  <Button
-                    className="min-h-12 text-sm"
-                    disabled={busy}
-                    key={outcome}
-                    onClick={() => submitOutcome(outcome)}
-                    type="button"
-                    variant={
-                      ["wrong_number", "do_not_call", "disqualified"].includes(outcome)
-                        ? "danger"
-                        : "secondary"
-                    }
-                  >
-                    {label(outcome)}
-                    {shortcut ? <span className="text-xs text-muted"> {shortcut}</span> : null}
-                  </Button>
-                ))}
+                {outcomeControls
+                  .filter(([, outcome]) => primaryOutcomes.includes(outcome))
+                  .map(([shortcut, outcome]) => (
+                    <Button
+                      className="min-h-12 text-sm"
+                      disabled={busy}
+                      key={outcome}
+                      onClick={() => submitOutcome(outcome)}
+                      type="button"
+                      variant={
+                        ["wrong_number", "do_not_call", "disqualified"].includes(outcome)
+                          ? "danger"
+                          : "secondary"
+                      }
+                    >
+                      {label(outcome)}
+                      {shortcut ? <span className="text-xs text-muted"> {shortcut}</span> : null}
+                    </Button>
+                  ))}
+                <details className="col-span-2 rounded-md border border-border bg-surface-raised p-2 sm:col-span-4 xl:col-span-7">
+                  <summary className="cursor-pointer text-sm font-semibold text-muted">
+                    More outcomes
+                  </summary>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+                    {outcomeControls
+                      .filter(([, outcome]) => !primaryOutcomes.includes(outcome))
+                      .map(([shortcut, outcome]) => (
+                        <Button
+                          className="min-h-11 text-sm"
+                          disabled={busy}
+                          key={outcome}
+                          onClick={() => submitOutcome(outcome)}
+                          type="button"
+                          variant={
+                            ["wrong_number", "do_not_call", "disqualified"].includes(outcome)
+                              ? "danger"
+                              : "secondary"
+                          }
+                        >
+                          {label(outcome)}
+                          {shortcut ? (
+                            <span className="text-xs text-muted"> {shortcut}</span>
+                          ) : null}
+                        </Button>
+                      ))}
+                  </div>
+                </details>
               </div>
             </div>
           </div>

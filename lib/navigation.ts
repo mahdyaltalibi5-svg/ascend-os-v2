@@ -1,17 +1,13 @@
 import {
   BadgeDollarSign,
-  Bot,
-  Building2,
   CalendarDays,
   Clock3,
   SearchCheck,
-  Megaphone,
   PhoneCall,
   RadioTower,
   Settings,
   ShieldCheck,
-  Target,
-  UsersRound
+  Target
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,11 +24,11 @@ export type NavItem = {
 
 export const appNavigation: NavItem[] = [
   {
-    label: "Command Center",
+    label: "Home",
     href: "/app",
     icon: RadioTower,
     permissions: ["dashboard.view"],
-    description: "Role-aware operating home."
+    description: "Operating home."
   },
   {
     label: "Sales",
@@ -94,34 +90,6 @@ export const appNavigation: NavItem[] = [
     icon: BadgeDollarSign,
     permissions: ["revenue.view"],
     description: "Real revenue goals, invoices, payments, forecasts, and attention queues."
-  },
-  {
-    label: "Clients",
-    href: "/app/module/clients",
-    icon: Building2,
-    permissions: ["clients.view"],
-    description: "Client operations arrive in later milestones."
-  },
-  {
-    label: "Growth",
-    href: "/app/module/growth",
-    icon: Megaphone,
-    permissions: ["leads.view"],
-    description: "SEO, GBP, and attribution modules arrive in later milestones."
-  },
-  {
-    label: "Personal Brand",
-    href: "/app/module/personal-brand",
-    icon: UsersRound,
-    permissions: ["dashboard.view"],
-    description: "Content planning arrives in a later milestone."
-  },
-  {
-    label: "Agents",
-    href: "/app/module/agents",
-    icon: Bot,
-    permissions: ["agents.view"],
-    description: "Agent coordination arrives in a later milestone."
   },
   {
     label: "Settings",
